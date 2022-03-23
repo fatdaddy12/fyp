@@ -12,7 +12,9 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+    
     console.log(`${socket.id} connected`);
+    console.log( socket.client.conn.server.clientsCount + " users connected");
 
     socket.on('chat message', (msg) => {
         io.emit('chat message', msg)

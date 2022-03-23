@@ -6,21 +6,28 @@
   </head>
 
   <body>
-    <h1>♠ ♣ ♥ ♦ ♤ ♧ ♡ ♢ 🂱 🂲 🂳 🂴 🂵 🂶 🂷 🂸 🂹 🂺 🂻 🂼 🂽 🂾 🂡 🂢 🂣 🂤 🂥 🂦 🂧 🂨 🂩 🂪 🂫 🂬 🂭 🂮 🃁 🃂 🃃 🃄 🃅 🃆 🃇 🃈 🃉 🃊 🃋 🃌 🃍 🃎 🃑 🃒 🃓 🃔 🃕 🃖 🃗 🃘 🃙 🃚 🃛 🃜 🃝 🃞 🂠 🃏 🃟 🂿 </h1>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
 
-    <form id="connect" action="">
-      <input id="input" autocomplete="off" /><button>Connect</button>
-    </form>
+    <div id="chat">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" /><button>Send</button>
+      </form>
+    </div>
 
-    <img id="scale-image">
+    <h1 id="symbols">♠ ♣ ♥ ♦ ♤ ♧ ♡ ♢ 🂱 🂲 🂳 🂴 🂵 🂶 🂷 🂸 🂹 🂺 🂻 🂼 🂽 🂾 🂡 🂢 🂣 🂤 🂥 🂦 🂧 🂨 🂩 🂪 🂫 🂬 🂭 🂮 🃁 🃂 🃃 🃄 🃅 🃆 🃇 🃈 🃉 🃊 🃋 🃌 🃍 🃎 🃑 🃒 🃓 🃔 🃕 🃖 🃗 🃘 🃙 🃚 🃛 🃜 🃝 🃞 🂠 🃏 🃟 🂿 </h1>
 
-    <button id="hit">Hit</button>
-    <button id="stand">Stand</button>
-
+    <div id="game">
+      <form id="connect" action="">
+        <input id="input" autocomplete="off" /><button>Connect</button>
+      </form>
+  
+      <img id="scale-image">
+  
+      <button id="hit">Hit</button>
+      <button id="stand">Stand</button>
+      <button id="chat-hide">Chat</button>
+    </div>
+    
     <script src="/socket.io/socket.io.js"></script>
     <script src="/chat.js"></script>
     <script src="/game.js"></script>
