@@ -7,13 +7,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
     background: green;
     width: 280px;
     margin: auto;
+    display: none;
 }
 
 h1 {
     font-size: 72px;
 }
 
-#chat { 
+#chat {
+    display: none;
     position: absolute;
     width: 25%;
     height: 100%;
@@ -26,14 +28,20 @@ h1 {
     bottom: 0;
 }
 
-#game {
-    margin-right: 25%;
-}
-
 #scale-image {
     width: 25%;
+    display: none;
 }
 
-#symbols {
-    display: none;
+#gameCanvas {
+    border: black solid 2px;
+    margin: 2px;
+    background-color: green;
+}
+
+#controls {
+    text-align: center;
+    border: solid 1px black;
+    width: auto;
+    background-color: red;
 }
