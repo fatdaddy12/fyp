@@ -14,11 +14,6 @@ form.addEventListener('submit', function(e) {
     }
 });
 
-hit.addEventListener('click', function(e) {
-    console.log('bruh');
-    socket.emit('hit');
-})
-
 stand.addEventListener('click', function(e) {
     socket.emit('stand');
 })
@@ -30,9 +25,9 @@ socket.on('logon', () => {
     window.scrollTo(0, document.body.scrollHeight);
 })
 
-socket.on('logoff', () => {
+socket.on('logoff', (id) => {
     var item = document.createElement('li');
-    item.textContent = 'A user has disconnected.';
+    item.textContent = `User ${id} has disconnected.`;
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
 })
@@ -44,7 +39,3 @@ socket.on('chat message', function(msg) {
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
 });
-
-socket.on('hitted', () => {
-    console.log('hitted');
-})

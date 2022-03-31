@@ -1,3 +1,4 @@
+
 var cards = ['ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'jack', 'queen', 'king']; //11 jack, 12 queen, 13 king
 var suit = ['diamonds', 'hearts', 'spades', 'clubs'];
 var imageStore = document.getElementById('scale-image');
@@ -94,8 +95,8 @@ ctx.font = "48px serif";
 var cardHeight = 100;
 var cardWidth = 65;
 
-var resultNum = 2;
-var resultSuit = 'diamonds';
+//var resultNum = 2;
+//var resultSuit = 'diamonds';
 
 standBtn.addEventListener('click', stand)
 hitBtn.addEventListener('click', hit)
@@ -115,15 +116,18 @@ function card(img, x, y) {
     //y += 1;
 }
 
+requestAnimationFrame(draw);
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (p1cards.length != 0) {
 
-        var img = new Image();
-        img.src = `/assets/${resultNum}_of_${resultSuit}.svg`
+        //var img = new Image();
+        //img.src = `/assets/${resultNum}_of_${resultSuit}.svg`
+        //console.log(img.src);
     
         var x = 5;
-        var y = 5;
+        var y = 5; //fix this
 
         p1cards.forEach(function(item) {
             var img = new Image();
@@ -134,26 +138,29 @@ function draw() {
         });
     }
 
+    requestAnimationFrame(draw);
+
 }
-setInterval(draw, 10);
 
 function stand() {
     console.log('Stand');
 }
 
 function hit() {
-    drawCard();
-    console.log('Hit');
+    //drawCard();
+    socket.emit('hit');
+    hitBtn.disabled = true;
+    playerTxt.textContent = 'Waiting for other player!'
 }
 
-function drawCard() {
-    var resultNum = cards[Math.floor(Math.random()*cards.length)];
-    var resultSuit = suit[Math.floor(Math.random()*suit.length)];
+function drawCard(resultNum, resultSuit) {
+    //var resultNum = cards[Math.floor(Math.random()*cards.length)];
+    //var resultSuit = suit[Math.floor(Math.random()*suit.length)];
     drawTxt.textContent = `You drew ${resultNum} of ${resultSuit}`;
-    cardImg.src = `/assets/${resultNum}_of_${resultSuit}.svg`
+    //cardImg.src = `/assets/${resultNum}_of_${resultSuit}.svg`
 
     p1cards.push([resultNum, resultSuit]);
-    console.log(p1cards);
+    //console.log(p1cards);
 
     //var img = new Image();
     //img.addEventListener('load', function() {
@@ -173,3 +180,17 @@ function resizeGame() {
     canvas.height = (desiredY * multiplierX) * 0.7
     canvas.width = (desiredX * multiplierX) * 0.7
 }
+
+socket.on('hitted', (resultNum, resultSuit) => {
+    var item = document.createElement('li');
+    item.textContent = `${resultNum} of ${resultSuit}`;
+    messages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+
+    drawCard(resultNum, resultSuit);
+})
+
+socket.on('turn', () => {
+    hitBtn.disabled = false;
+    playerTxt.textContent = 'Your Turn!'
+})
