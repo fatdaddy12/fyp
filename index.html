@@ -16,12 +16,34 @@
 
     <div id="game">
 
+      <h1 id="roomCode"></h1>
+      <p id="playerList">Players: </p>
+
+      <button id="startBtn" disabled="true">Begin Game</button>
+
+      <form id="createForm" action="#">
+        <h1>Create Room</h1>
+        <input id="gameid" autocomplete="off" placeholder="Room ID"/>
+        <input id="usernameid" autocomplete="off" placeholder="Username"/>
+        <button>Connect</button>
+      </form>
+
+      <form id="joinForm" action="#">
+        <h1>Join Room</h1>
+        <input id="joinGameId" autocomplete="off" placeholder="Room ID"/>
+        <input id="joinUsernameId" autocomplete="off" placeholder="Username"/>
+        <button>Connect</button>
+      </form>
+
       <canvas id="gameCanvas" width="300" height="300"></canvas>
 
-      <form id="connect" action="">
-        <input id="input" autocomplete="off" /><button>Connect</button>
-      </form>
-  
+      <div id="gameText">
+        <p>Other Player's Cards:</p>
+
+        <p>Your Cards:</p>
+
+      </div>
+
       <img id="scale-image">
   
       <div id="controls">

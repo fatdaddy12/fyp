@@ -22,14 +22,14 @@ socket.on('logon', () => {
     var item = document.createElement('li');
     item.textContent = 'A user has connected.';
     messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+    //window.scrollTo(0, document.body.scrollHeight);
 })
 
 socket.on('logoff', (id) => {
     var item = document.createElement('li');
     item.textContent = `User ${id} has disconnected.`;
     messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+    //window.scrollTo(0, document.body.scrollHeight);
 })
 
 socket.on('chat message', function(msg) {
@@ -37,5 +37,5 @@ socket.on('chat message', function(msg) {
     var item = document.createElement('li');
     item.textContent = `${msg}`;
     messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+    //window.scrollTo(0, document.body.scrollHeight);
 });

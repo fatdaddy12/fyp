@@ -5,9 +5,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 
 #connect {
     background: green;
-    width: 280px;
+    width: 500px;
     margin: auto;
-    display: none;
 }
 
 #form {
@@ -22,8 +21,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
     width: 10%;
 }
 
-h1 {
-    font-size: 72px;
+#createForm {
+    background-color: green;
+    padding: 2px;
+}
+
+#joinForm {
+    background-color: red;
+    padding: 2px;
+}
+
+#startBtn {
+    display: none;
 }
 
 #chat {
@@ -52,6 +61,12 @@ h1 {
     border: black solid 2px;
     margin: 2px;
     background-color: green;
+    display: none;
+}
+
+#gameText {
+    display: none;
+    background-color: green;
 }
 
 #controls {
@@ -59,4 +74,13 @@ h1 {
     border: solid 1px black;
     width: auto;
     background-color: red;
+    display: none;
+}
+
+#gameCode {
+    display: none;
+}
+
+#playerList {
+    display: none;
 }
