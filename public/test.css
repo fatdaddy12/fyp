@@ -1,7 +1,4 @@
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; }
-
-#messages { list-style-type: none; }
-#messages > li:nth-child(odd) { background: #efefef; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0;}
 
 #connect {
     background: green;
@@ -9,16 +6,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
     margin: auto;
 }
 
-#form {
+#messages > li:nth-child(odd) {
+    background: #efefef;
+}
+
+#messages > li {
+    padding: 5px;
+}
+
+#messages {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    overflow: auto;
+    max-height: 500px;
+    padding-bottom: 5%;
+    box-sizing: border-box;
+}
+
+#chat {
+    display: none;
+    position: absolute;
+    width: 25%;
+    height: 500px;
+    right: 5px;
+    bottom: 0;
+    border-left: black solid 1px;
+    border-top: black solid 1px;
+    border-right: black solid 1px;
+    background-color: white;
+}
+
+#chat #chatForm {
+    position: absolute;
+    bottom: 0;
+}
+
+#chatForm {
     background-color: green;
     width: 100%;
     display: flex;
     margin: auto;
     padding: 2px;
+    height: 5%;
+    box-sizing: border-box;
 }
 
-#form #input {
-    width: 10%;
+#chatForm #input {
+    width: 100%;
 }
 
 #createForm {
@@ -35,31 +70,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
     display: none;
 }
 
-#chat {
-    position: absolute;
-    width: 25%;
-    height: 100%;
-    right: 0;
-    border-left: black solid 1px;
-}
-
-#chat #form {
-    position: fixed;
-    bottom: 0;
-}
-
 #scale-image {
     width: 25%;
     display: none;
 }
 
 #game {
-    margin-right: 25%;
+    width: 100%;
 }
 
 #gameCanvas {
-    border: black solid 2px;
-    margin: 2px;
     background-color: green;
     display: none;
 }
@@ -70,11 +90,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #controls {
-    text-align: center;
-    border: solid 1px black;
-    width: auto;
-    background-color: red;
     display: none;
+    text-align: center;
+    width: 100%;
+    background-color: red;
 }
 
 #gameCode {
@@ -83,4 +102,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 
 #playerList {
     display: none;
+}
+
+.textCards {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#card {
+    height: 100px;
+    width: 65px;
+    border: 2px black solid;
+    border-radius: 5px;
+    margin: 2px;
+    background-color: white;
 }

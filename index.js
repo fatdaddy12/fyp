@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const internal = require('stream');
 const io = new Server(server);
 
 var cards = ['ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'jack', 'queen', 'king'];
@@ -53,19 +54,56 @@ function get_users_in_room(users, roomName) {
     io.to(roomName).emit("update users", usersInRoom);
 }
 
-function draw_card() {
+function draw_card(totalScore = 0) {
     var resultNum = cards[Math.floor(Math.random()*cards.length)];
     var resultSuit = suit[Math.floor(Math.random()*suit.length)];
+    var value = 0;
+
+    //console.log(totalScore);
+
+    if (resultNum == 'ace' && totalScore < 10) {
+        value = 11; //Unless it would take them over 21
+    } else if (resultNum == 'ace' && totalScore >= 10) {
+        value = 1;
+    } else if (resultNum == 'jack' || resultNum == 'queen' || resultNum == 'king') {
+        value = 10;
+    } else {
+        value = resultNum;
+    }
 
     var card = {
         resultNum: resultNum,
-        resultSuit: resultSuit
+        resultSuit: resultSuit,
+        value: value
     };
 
     return card;
 }
 
-//brainwave: store scores in array with room ID
+function get_total_score(cards) {
+    var totalScore = 0;
+
+    cards.forEach(element => totalScore += element.value);
+
+    return totalScore;
+}
+
+function determine_winner(room) {
+    var totalScore1 = get_total_score(score.find(item => item.room == room).player1)
+    var totalScore2 = get_total_score(score.find(item => item.room == room).player2)
+
+    if (totalScore1 > totalScore2) {
+        console.log('Player 1 wins');
+        return 'Player 1 is the winner!';
+    } else if (totalScore1 < totalScore2) {
+        console.log('Player 2 wins');
+        return 'Player 2 is the winner!';
+    } else if (totalScore1 == totalScore2) {
+        console.log('Draw!')
+        return "It's a draw!";
+    };
+}
+
 io.on('connection', (socket) => {
     socket.on("create room", ({username, roomName}) => {
         if (!rooms.includes(roomName)) {
@@ -95,7 +133,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on("join room", ({username, roomName}) => {
+    socket.on("join room", ({username, roomName}) => { // IF Room Exists
         let playersInRoom = io.of("/").adapter.rooms.get(roomName).size;
         if (playersInRoom < 2) {
             const user = {
@@ -138,12 +176,12 @@ io.on('connection', (socket) => {
         newScore = {
             room: roomName,
             player1: [],
-            player2: []
+            player2: [],
+            p1status: 'playing',
+            p2status: 'playing'
         };
 
         newScore.player1.push(draw_card());
-        newScore.player1.push(draw_card());
-        newScore.player2.push(draw_card());
         newScore.player2.push(draw_card());
 
         score.push(newScore);
@@ -153,57 +191,125 @@ io.on('connection', (socket) => {
 
         io.to(roomName).emit('hitted', p1score, p2score);
 
-        console.log(score);
-
         let host = hosts.find((item) => item.room == roomName);
             io.to(host.id).emit("turn")
 
-        //Each player starts with 2 cards
-        //One card of other player revealed
-    })
+    });
 
     socket.on('hit', (room) => {
-        var currentTurn = turn.findIndex(item => item.room == room);
+        console.log(`HIT: The room you are emitting from is ${room}`);
+        var currentTurn = turn.find(item => item.room == room);
+        console.log(currentTurn);
 
-        if (turn[currentTurn].turn == 0) {
-            score.find(item => item.room == room).player1.push(draw_card());
-            turn[currentTurn].turn ++;
-        } else {
-            score.find(item => item.room == room).player2.push(draw_card());
-            turn[currentTurn].turn = 0;
+        //console.log(currentTurn);
+
+        if (currentTurn.turn == 0) { //If player 1 turn
+            var totalScore = get_total_score(score.find(item => item.room == room).player1);
+            score.find(item => item.room == room).player1.push(draw_card(totalScore));
+
+            //Are they bust?
+            totalScore = get_total_score(score.find(item => item.room == room).player1);
+            if (totalScore > 21) {
+                console.log('P1 bust');
+                score.find(item => item.room == room).p1status = 'bust';
+            }
+
+            if (score.find(item => item.room == room).p2status == 'playing') {
+                console.log('fuck you');
+                console.log(turn.find(item => item.room == room));
+                turn.find(item => item.room == room).turn ++;
+                console.log('fuck you too');
+                console.log(turn.find(item => item.room == room));
+            }
+            
+        } else if (currentTurn.turn == 1) { //If player 2 turn
+            var totalScore = get_total_score(score.find(item => item.room == room).player2);
+            score.find(item => item.room == room).player2.push(draw_card(totalScore));
+
+            //Are they bust?
+            totalScore = get_total_score(score.find(item => item.room == room).player2);
+            if (totalScore > 21) {
+                console.log('P2 bust');
+                score.find(item => item.room == room).p2status = 'bust';
+            };
+
+            if (score.find(item => item.room == room).p1status == 'playing') {
+                turn.find(item => item.room == room).turn = 0;
+            }
         }
-
-        //console.log('update');
-        //console.log(turn);
-
-        //var resultNum = cards[Math.floor(Math.random()*cards.length)];
-        //var resultSuit = suit[Math.floor(Math.random()*suit.length)];
-
-        //score.find(item => item.room == room).player1.push(draw_card());
 
         var p1score = score.find(item => item.room == room).player1
         var p2score = score.find(item => item.room == room).player2
-        console.log('Player 1');
-        console.log(score.find(item => item.room == room).player1);
-        console.log('Player 2');
-        console.log(score.find(item => item.room == room).player2);
+        //console.log('Player 1');
+        //console.log(score.find(item => item.room == room).player1);
+        //console.log('Player 2');
+        //console.log(score.find(item => item.room == room).player2);
 
         io.to(room).emit('hitted', p1score, p2score);
 
-        io.to(users[turn[currentTurn].turn].id).emit('turn');
+        //let currentRoom = turn.find(item => item.room == room).room;
+        let usersInRoom = [];
+        users.forEach(function(item) {
+            //console.log('Logging a USER');
+            //console.log(item);
+            if (item.room == room) {
+                usersInRoom.push(item);
+            };
+        });
+
+        console.log(usersInRoom[currentTurn.turn]);
+        io.to(usersInRoom[currentTurn.turn].id).emit('turn');
+        /*console.log('Users');
+        console.log(users);
+        console.log('Current Turn');
+        console.log(currentTurn);
+        console.log('turn');
+        console.log(turn);
+        console.log('Turn [ Current Turn ]');
+        console.log(turn[currentTurn]);
+        console.log('User Its emitted turn to')
+        console.log(users[turn[currentTurn].turn]);*/
+
+        //console.log(score.find(item => item.room == room));
 
         //next_turn();
-    })
+    });
+
+    socket.on('stand', (room) => {
+        console.log(`STAND: The room you are emitting from is ${room}`);
+        var currentTurn = turn.findIndex(item => item.room == room);
+
+        if (turn[currentTurn].turn == 0) { // and if stnad
+            if (score.find(item => item.room == room).p2status == 'playing') {
+                turn[currentTurn].turn ++;
+            };
+
+            score.find(item => item.room == room).p1status = 'stand';
+        } else {
+            if (score.find(item => item.room == room).p1status == 'playing') {
+                turn[currentTurn].turn = 0
+            };
+
+            score.find(item => item.room == room).p2status = 'stand';
+        };
+
+        io.to(room).emit('stood');
+
+        if (score.find(item => item.room == room).p1status == 'stand' && score.find(item => item.room == room).p2status == 'stand') {
+            //determine_winner(room);
+            io.to(room).emit('game end', determine_winner(room));
+        } else {
+            io.to(users[turn[currentTurn].turn].id).emit('turn');
+        }
+
+        console.log(score.find(item => item.room == room));
+    });
 
     players.push(socket);
     
     console.log(`${socket.id} connected`);
     console.log( socket.client.conn.server.clientsCount + " users connected");
     io.emit('logon', socket.id);
-
-    //if (players.length > 0) {
-    //    io.to(players[turn].id).emit('turn');
-    //};
 
     socket.on('chat message', (msg) => {
         io.emit('chat message', msg)

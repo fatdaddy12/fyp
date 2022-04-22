@@ -9,7 +9,7 @@
 
     <div id="chat">
       <ul id="messages"></ul>
-      <form id="form" action="">
+      <form id="chatForm" action="">
         <input id="input" autocomplete="off" /><button>Send</button>
       </form>
     </div>
@@ -39,23 +39,32 @@
 
       <div id="gameText">
         <p>Other Player's Cards:</p>
+        <div id="p1cards" class="textCards">
+
+        </div>
 
         <p>Your Cards:</p>
+        <div id="p2cards" class="textCards">
+          
+        </div>
 
       </div>
+
+      <div id="cardTest">
+
+      </div>
+
 
       <img id="scale-image">
   
       <div id="controls">
         <button id="hit" disabled="true">Hit</button>
-        <button id="stand">Stand</button>
+        <button id="stand" disabled="true">Stand</button>
         <button id="chat-hide">Chat</button>
   
         <p id="turn"></p>
         <p id="score">Your Total: </p>
         <p id="draw"></p>
-
-        <img id="card">
       </div>
    
 

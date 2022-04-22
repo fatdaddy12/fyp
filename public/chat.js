@@ -1,10 +1,8 @@
 var socket = io();
 
-var form = document.getElementById('form');
+var form = document.getElementById('chatForm');
 var input = document.getElementById('input');
-
-var hit = document.getElementById('hit');
-var stand = document.getElementById('stand');
+var messages = document.getElementById('messages');
 
 form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -14,13 +12,9 @@ form.addEventListener('submit', function(e) {
     }
 });
 
-stand.addEventListener('click', function(e) {
-    socket.emit('stand');
-})
-
-socket.on('logon', () => {
+socket.on('room joined', (roomName) => {
     var item = document.createElement('li');
-    item.textContent = 'A user has connected.';
+    item.textContent = `You have joined room: ${roomName}`;
     messages.appendChild(item);
     //window.scrollTo(0, document.body.scrollHeight);
 })
@@ -37,5 +31,5 @@ socket.on('chat message', function(msg) {
     var item = document.createElement('li');
     item.textContent = `${msg}`;
     messages.appendChild(item);
-    //window.scrollTo(0, document.body.scrollHeight);
+    messages.scrollTop = messages.scrollHeight;
 });
