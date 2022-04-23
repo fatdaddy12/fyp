@@ -26,7 +26,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 
 #chat {
     display: none;
-    position: absolute;
+    position: fixed;
     width: 25%;
     height: 500px;
     right: 5px;
@@ -38,17 +38,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #chat #chatForm {
-    position: absolute;
+    position: fixed;
     bottom: 0;
-}
-
-#chatForm {
     background-color: green;
-    width: 100%;
+    width: 25%;
     display: flex;
     margin: auto;
     padding: 2px;
-    height: 5%;
     box-sizing: border-box;
 }
 

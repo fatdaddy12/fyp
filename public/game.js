@@ -91,6 +91,7 @@ const roomCode = document.getElementById('roomCode');
 const playerList = document.getElementById('playerList');
 const standBtn = document.getElementById('stand');
 const hitBtn = document.getElementById('hit');
+const bgCanvas = document.getElementById('bgCanvas');
 const canvas = document.getElementById('gameCanvas');
 const noCanvas = document.getElementById('gameText');
 const cardImg = document.getElementById('card');
@@ -106,7 +107,7 @@ var p1score = 0;
 var p1cards = [];
 var p2score = 0;
 var p2cards = [];
-var currentTurn = 1;
+let currentTurn = 1;
 var player = 0;
 
 playerTxt.textContent = `Player ${currentTurn} Turn`
@@ -169,6 +170,8 @@ function card(img, x, y) {
 
 //requestAnimationFrame(draw);
 
+let images = [];
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (p1cards.length != 0) {
@@ -177,12 +180,12 @@ function draw() {
         var x2 = 0;
         var y2 = 0;
     
-        if (player == 0) {
+        if (player == 0) { //if player 1, P1cards is displayed at the bottom
             x = 5;
             y = canvas.height / 2;
             x2 = 5;
             y2 = 5;
-        } else {
+        } else { //If player 2, P1 cards is displayed at the top
             x = 5;
             y = 5;
             x2 = 5;
@@ -193,12 +196,14 @@ function draw() {
 
         if (type == '4g') {
             p1cards.forEach(function(item) {
-                var img = new Image();
-                if (i == 0 && player == 1) {
+                let img = images.find(image => image.src.includes(`/assets/${item.resultNum}_of_${item.resultSuit}.svg`));
+                
+                /*if (i == 0 && player == 1) {
                     img.src = `/assets/Card_back.svg`;
                 } else {
                     img.src = `/assets/${item.resultNum}_of_${item.resultSuit}.svg`;
-                };
+                };*/
+
                 
                 card(img, x, y);
                 x += ((cardWidth * multiplierX) + 5);
@@ -211,12 +216,14 @@ function draw() {
             var i2 = 0;
     
             p2cards.forEach(function(item) {
-                var img = new Image();
+                /*var img = new Image();
                 if (i2 == 0 && player == 0) {
                     img.src = `/assets/Card_back.svg`;
                 } else {
                     img.src = `/assets/${item.resultNum}_of_${item.resultSuit}.svg`;
-                };
+                };*/
+
+                let img = images.find(image => image.src.includes(`/assets/${item.resultNum}_of_${item.resultSuit}.svg`));
                 
                 card(img, x2, y2);
                 x2 += ((cardWidth * multiplierX) + 5);
@@ -264,7 +271,7 @@ function resizeGame() {
     canvas.width = (desiredX * multiplierX) * 0.7
 };
 
-socket.on('hitted', (p1score, p2score) => {
+socket.on('hitted', (p1score, p2score, currentTurn) => {
     //var item = document.createElement('li');
     //item.textContent = `${resultNum} of ${resultSuit}`;
     //messages.appendChild(item);
@@ -281,17 +288,29 @@ socket.on('hitted', (p1score, p2score) => {
     } else {
         p2cards.forEach(element => countingScore += element.value)
     };
-    
+
+    getImage(currentTurn);
     drawCards();
 
     scoreTxt.textContent = `Your Total: ${countingScore}`;
 });
 
-socket.on('turn', () => {
+socket.on('turn', (currentTurn) => {
     hitBtn.disabled = false;
     standBtn.disabled = false;
     playerTxt.textContent = 'Your Turn!'
+    getImage(currentTurn);
 });
+
+socket.on('new card', (card) => {
+    getImage(card);
+})
+
+function getImage(card) { //When you are Player 0 (1), P1cards are displayed at the bottom
+    let img = new Image();
+    img.src = `/assets/${card.resultNum}_of_${card.resultSuit}.svg`
+    images.push(img);
+}
 
 socket.on('game end', (winner) => {
     roomCode.textContent += ` ${winner}`;
@@ -346,6 +365,9 @@ socket.on('start game', () => {
     } else {
         noCanvas.style.display = "block";
     }
+
+    playerList.style.display = "none";
+    roomCode.style.display = "none";
     
     controls.style.display = "block";
     startBtn.style.display = "none";
