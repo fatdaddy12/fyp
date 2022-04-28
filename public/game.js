@@ -7,27 +7,32 @@ let slowInternet = false;
 let connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 let type = connection.effectiveType;
 
-console.log(`Connection type: ${type}`);
+let connTxt = document.getElementById('networkSpeed');
 
-if (type != '4g') {
-    slowInternet = true;
-} else {
-    requestAnimationFrame(draw);
-}
+console.log(`Connection type: ${type}`);
+connTxt.textContent += type;
+
+//if (type != '4g') {
+//    slowInternet = true;
+//} else {
+//    requestAnimationFrame(draw);
+//}
 
 function updateConnectionStatus() {
     console.log("Connection type changed from " + type + " to " + connection.effectiveType);
     type = connection.effectiveType;
 
+    connTxt.textContent = `Network Speed: ${type}`;
+
     if (type != '4g') {
-        canvas.style.display = "none";
-        noCanvas.style.display = "block";
+        //canvas.style.display = "none";
+        //noCanvas.style.display = "block";
         slowInternet = true;
     } else {
-        canvas.style.display = "block";
-        noCanvas.style.display = "none";
+        //canvas.style.display = "block";
+        //noCanvas.style.display = "none";
         slowInternet = false;
-        draw();
+        //draw();
     }
 }
 
@@ -51,22 +56,64 @@ let orientation = screen.orientation;
 let width = window.innerWidth;
 let height = window.innerHeight;
 
+let resolutionTxt = document.getElementById('resolution');
+let orientationTxt = document.getElementById('orientation');
+resolutionTxt.textContent = `Resolution of screen: ${width}x${height}`
+orientationTxt.textContent = `Orientation: ${orientation.type}, ${orientation.angle}`
+
 console.log(orientation);
 console.log(`Resolution of screen: ${width}x${height}`);
 
 window.addEventListener('resize', resizeGame);
 
-//Battery Monitor https://developer.mozilla.org/en-US/docs/Web/API/Battery_Status_API
-let battery = navigator.getBattery();
-console.log(battery);
+function resizeGame() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    orientation = screen.orientation;
+    multiplierX = width / desiredX;
+    multiplierY = height / desiredY;
 
-/*battery.addEventListener('levelchange', () => { //Temp
-    updateLevelInfo();
-  });
-  function updateLevelInfo(){
+    resolutionTxt.textContent = `Resolution of screen: ${width}x${height}`
+    orientationTxt.textContent = `Orientation: ${orientation.type}, ${orientation.angle}`
+    console.log(`${width}x${height}, MultplierX: ${multiplierX}, MultiplierY: ${multiplierY}, Orientation: ${orientation}`)
+
+    canvas.height = (desiredY * multiplierX) * 0.7
+    canvas.width = (desiredX * multiplierX) * 0.7
+};
+
+//Battery Monitor https://developer.mozilla.org/en-US/docs/Web/API/Battery_Status_API
+let batteryCharging = true;
+let batteryLevel = 100;
+
+let batteryLevelTxt = document.getElementById('batteryLevel');
+let batteryChargingTxt = document.getElementById('batteryCharging');
+
+navigator.getBattery().then(function(battery) {
+    console.log(battery);
+    batteryCharging = battery.charging;
+    batteryLevel = battery.level * 100;
+
+    batteryLevelTxt.textContent = `Battery Level: ${batteryLevel}%`;
+    batteryChargingTxt.textContent = `Battery Charging: ${batteryCharging}`;
+
+    console.log(batteryCharging);
+    console.log(batteryLevel);
+
+    battery.addEventListener('chargingchange', function() {
+        batteryCharging = battery.charging;
+        batteryChargingTxt.textContent = `Battery Charging: ${batteryCharging}`;
+    })
+
+    battery.addEventListener('levelchange', function() {
+        batteryLevel = battery.level;
+        batteryLevelTxt.textContent = `Battery Level: ${batteryLevel}%`;
+    })
+})
+
+function updateLevelInfo(){
     console.log("Battery level: "
                 + battery.level * 100 + "%");
-  };*/
+  };
 
 //Chat button
 const chatBtn = document.getElementById('chat-hide');
@@ -102,17 +149,15 @@ var multiplierY = height / desiredY;
 
 const playerTxt = document.getElementById('turn');
 const scoreTxt = document.getElementById('score');
-const drawTxt = document.getElementById('draw');
 var p1score = 0;
 var p1cards = [];
 var p2score = 0;
 var p2cards = [];
 let currentTurn = 1;
-var player = 0;
+var player = 1;
 
 playerTxt.textContent = `Player ${currentTurn} Turn`
 scoreTxt.textContent = `Your Total: ${p1score}`;
-drawTxt.textContent = 'You drew'
 
 console.log(multiplierX);
 console.log(multiplierY);
@@ -192,7 +237,8 @@ function draw() {
             y2 = canvas.height / 2;
         }
 
-        var i = 0;
+        let i = 0;
+        let i2 = 0;
 
         if (type == '4g') {
             p1cards.forEach(function(item) {
@@ -210,10 +256,8 @@ function draw() {
                 i++;
                 //y += 5;
     
-                //makeCard(item.resultNum, item.resultSuit);
+                //makCard(item.resultNum, item.resultSuit);
             });
-    
-            var i2 = 0;
     
             p2cards.forEach(function(item) {
                 /*var img = new Image();
@@ -253,24 +297,6 @@ function hit() {
     playerTxt.textContent = 'Waiting for other player!'
 };
 
-function drawCard(resultNum, resultSuit) {
-    drawTxt.textContent = `You drew ${resultNum} of ${resultSuit}`;
-    p1cards.push([resultNum, resultSuit]);
-};
-
-function resizeGame() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    orientation = window.orientation;
-    multiplierX = width / desiredX;
-    multiplierY = height / desiredY;
-
-    console.log(`${width}x${height}, MultplierX: ${multiplierX}, MultiplierY: ${multiplierY}, Orientation: ${orientation}`)
-
-    canvas.height = (desiredY * multiplierX) * 0.7
-    canvas.width = (desiredX * multiplierX) * 0.7
-};
-
 socket.on('hitted', (p1score, p2score, currentTurn) => {
     //var item = document.createElement('li');
     //item.textContent = `${resultNum} of ${resultSuit}`;
@@ -283,37 +309,47 @@ socket.on('hitted', (p1score, p2score, currentTurn) => {
 
     var countingScore = 0;
 
-    if (player == 0) {
+    if (player == 1) {
         p1cards.forEach(element => countingScore += element.value)
     } else {
         p2cards.forEach(element => countingScore += element.value)
     };
 
-    getImage(currentTurn);
+    //getImage(currentTurn);
     drawCards();
 
+    if (batteryLevel > 65 || batteryCharging == true) {
+        animateCard(currentTurn);
+    }
+    
     scoreTxt.textContent = `Your Total: ${countingScore}`;
 });
 
-socket.on('turn', (currentTurn) => {
+socket.on('turn', () => {
     hitBtn.disabled = false;
     standBtn.disabled = false;
     playerTxt.textContent = 'Your Turn!'
-    getImage(currentTurn);
+    //getImage(currentTurn);
 });
 
 socket.on('new card', (card) => {
+    //console.log(card);
     getImage(card);
 })
 
-function getImage(card) { //When you are Player 0 (1), P1cards are displayed at the bottom
+function getImage(card) { //it does this even if the canvas isnt displaying
     let img = new Image();
     img.src = `/assets/${card.resultNum}_of_${card.resultSuit}.svg`
+    //console.log(`${img.src} at ${Date.now()}`);
     images.push(img);
 }
 
 socket.on('game end', (winner) => {
-    roomCode.textContent += ` ${winner}`;
+    roomCode.style.display = "block";
+    roomCode.textContent = ` ${winner}`;
+
+    hitBtn.disabled = true;
+    standBtn.disabled = true;
 });
 
 //==================================================== Room Section ====================================================
@@ -360,11 +396,11 @@ socket.on('ready to begin', () => {
 });
 
 socket.on('start game', () => {
-    if (slowInternet == false) {
-        canvas.style.display = "block";
-    } else {
+    //if (slowInternet == false) {
+    //    canvas.style.display = "block";
+    //} else {
         noCanvas.style.display = "block";
-    }
+    //}
 
     playerList.style.display = "none";
     roomCode.style.display = "none";
@@ -383,33 +419,34 @@ var joinTxt = document.getElementById('joinGameId');
 var joinUserTxt = document.getElementById('joinUsernameId');
 
 let roomName = '';
+let username = '';
 
 const controls = document.getElementById('controls');
 
 roomForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (roomTxt.value) {
-        let username = usernameTxt.value;
+        username = usernameTxt.value;
         roomName = roomTxt.value;
-        //console.log(roomName);
         socket.emit("create room", {username, roomName});
+        player = 1;
     }
 });
 
 joinForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (joinTxt.value) {
-        let username = joinUserTxt.value;
+        username = joinUserTxt.value;
         roomName = joinTxt.value;
         socket.emit("join room", {username, roomName});
-        player = 1;
+        player = 2;
 
         //canvas.style.display = "block";
         //controls.style.display = "block";
         //roomForm.style.display = "none";
         //joinForm.style.display = "none";
 
-    }
+    };
 });
 
 startBtn.addEventListener('click', function(e) {
@@ -418,30 +455,42 @@ startBtn.addEventListener('click', function(e) {
 
 // Text Based Test
 let cardContainer = document.getElementById('cardTest');
-let textCardsP1 = document.getElementById('p1cards');
-let textCardsP2 = document.getElementById('p2cards');
+let topCards = document.getElementById('topCards');
+let bottomCards = document.getElementById('bottomCards');
 
 //suit.forEach(element => makeCard2(element));
 
 function drawCards() {
-    while (textCardsP1.firstChild) {
-        textCardsP1.removeChild(textCardsP1.lastChild);
+    while (topCards.firstChild) {
+        topCards.removeChild(topCards.lastChild);
     };
 
-    while (textCardsP2.firstChild) {
-        textCardsP2.removeChild(textCardsP2.lastChild);
+    while (bottomCards.firstChild) {
+        bottomCards.removeChild(bottomCards.lastChild);
     };
 
     p1cards.forEach(function(item) {
-        makeCard(item.resultSuit, item.resultNum, 1);
+        let newCard = makeCard(item.resultSuit, item.resultNum);
+
+        if (player == 1) {
+            bottomCards.appendChild(newCard);
+        } else {
+            topCards.appendChild(newCard);
+        };
     });
 
     p2cards.forEach(function(item) {
-        makeCard(item.resultSuit, item.resultNum, 2);
-    });
-}
+        let newCard = makeCard(item.resultSuit, item.resultNum);
 
-function makeCard(suit, num, player) {
+        if (player == 1) {
+            topCards.appendChild(newCard);
+        } else {
+            bottomCards.appendChild(newCard);
+        };
+    });
+};
+
+function makeCard(suit, num) {
     const newDiv = document.createElement("div");
     const newCardValue = document.createElement("p");
     const newCardSuit = document.createElement("p");
@@ -450,36 +499,64 @@ function makeCard(suit, num, player) {
     newCardValue.setAttribute("id", "cardValue");
     newCardSuit.setAttribute("id", "cardValue");
 
+    let suitTxt = '';
+    if (suit == 'diamond') {
+        suitTxt = '♦'; 
+    } else if (suit == 'spades') {
+        suitTxt = '♠';
+    } else if (suit == 'clubs') {
+        suitTxt = '♣';
+    } else {
+        suitTxt = '♥'
+    };
+
+    let numTxt = '';
+    if (num == 'jack') {
+        numTxt = 'J';
+    } else if (num == 'queen') {
+        numTxt = 'Q';
+    } else if (num == 'king') {
+        numTxt = 'K';
+    } else {
+        numTxt = 'A';
+    };
+
+    newDiv.setAttribute("class", suit); //♠ ♣ ♥ ♦
+
+    let parsed = parseInt(num);
+
+    if (!isNaN(parsed)) {
+        newCardValue.textContent = num;
+    } else {
+        newCardValue.textContent = numTxt;
+    };
+    
+    newCardSuit.textContent = suitTxt;
+
     newDiv.appendChild(newCardValue);
     newDiv.appendChild(newCardSuit);
 
-    newCardValue.textContent = num;
-    newCardSuit.textContent = suit;
-
-    if (player == 1) {
-        textCardsP1.appendChild(newDiv);
-    } else if (player == 2) {
-        textCardsP2.appendChild(newDiv);
-    };
-    
+    return newDiv;
 };
 
-function makeCard2(suit) {
-    cards.forEach((card) => {
-        const newDiv = document.createElement("div");
-        const newCardValue = document.createElement("p");
-        const newCardSuit = document.createElement("p");
+function animateCard(passedTurn) {
+    console.log(`Last turn was ${passedTurn}`); //CT = 1: Player 1 Turn (bottom/top)     CT = 2: Player 2 Turn (top/bottom)
     
-        newDiv.setAttribute("id", "card");
-        newCardValue.setAttribute("id", "cardValue");
-        newCardSuit.setAttribute("id", "cardValue");
-    
-        newDiv.appendChild(newCardValue);
-        newDiv.appendChild(newCardSuit);
-    
-        newCardValue.textContent = card;
-        newCardSuit.textContent = suit;
-    
-        cardContainer.appendChild(newDiv);
-    });
+    if (player == 1) {
+        if (passedTurn == 1) {
+            console.log(`${passedTurn} Bottom Cards`);
+            bottomCards.children[bottomCards.children.length - 1].classList.toggle('latestCard');
+        } else {
+            console.log(`${passedTurn} Top Cards`);
+            topCards.children[topCards.children.length - 1].classList.toggle('latestCard');
+        }
+    } else {
+        if (passedTurn == 2) {
+            console.log(`${passedTurn} Bottom Cards`);
+            bottomCards.children[bottomCards.children.length - 1].classList.toggle('latestCard');
+        } else {
+            console.log(`${passedTurn} Top Cards`);
+            topCards.children[topCards.children.length - 1].classList.toggle('latestCard');
+        }
+    }
 };

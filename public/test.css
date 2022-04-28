@@ -1,4 +1,18 @@
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0;}
+@keyframes test {
+    0% { transform: translate(-1000px, -1000px);}
+    100% {transform: translate(0);}
+}
+
+.latestCard {
+    animation-name: test;
+    animation-duration: 0.5s;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    margin: 0; 
+    padding: 0;
+}
 
 #connect {
     background: green;
@@ -25,6 +39,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #chat {
+    z-index: 999;
     display: none;
     position: fixed;
     width: 25%;
@@ -53,13 +68,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #createForm {
-    background-color: green;
+    background-color: grey;
     padding: 2px;
+    width: auto;
+    max-width: 500px;
+    margin: auto;
+    margin-bottom: 5px;
 }
 
 #joinForm {
+    margin-top: 50px;
     background-color: red;
     padding: 2px;
+    width: auto;
+    max-width: 500px;
+    margin: auto;
 }
 
 #startBtn {
@@ -81,15 +104,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #gameText {
+    margin: 0;
+    padding: 0;
     display: none;
     background-color: green;
+    width: 100%;
+    aspect-ratio: 16 / 9;
 }
 
 #controls {
     display: none;
+    position: fixed;
+    bottom: 0;
     text-align: center;
     width: 100%;
-    background-color: red;
+    background-color: white;
+    font-size: 32px;
+}
+
+#controls button {
+    padding: 3px;
+    font-size: 32px;
 }
 
 #gameCode {
@@ -106,10 +141,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 }
 
 #card {
-    height: 100px;
-    width: 65px;
+    width: 10%;
+    width: 6.5%;
+    aspect-ratio: 6.5 / 10;
     border: 2px black solid;
     border-radius: 5px;
     margin: 2px;
     background-color: white;
+    user-select: none;
+    padding: 1px;
+}
+
+.hearts, .diamonds {
+    color: red;
+}
+
+.spades, .clubs {
+    color: black;
 }

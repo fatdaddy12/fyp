@@ -7,7 +7,7 @@ var messages = document.getElementById('messages');
 form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (input.value) {
-        socket.emit('chat message', input.value);
+        socket.emit('chat message', input.value, username);
         input.value = '';
     }
 });
@@ -26,10 +26,9 @@ socket.on('logoff', (id) => {
     //window.scrollTo(0, document.body.scrollHeight);
 })
 
-socket.on('chat message', function(msg) {
-    console.log("message sent");
+socket.on('chat message', function(msg, username) {
     var item = document.createElement('li');
-    item.textContent = `${msg}`;
+    item.textContent = `${username}: ${msg}`;
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
 });
