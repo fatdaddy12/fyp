@@ -135,13 +135,19 @@ function showChat() {
 //Game Initialisation
 
 const roomCode = document.getElementById('roomCode');
-const playerList = document.getElementById('playerList');
+const lobby = document.getElementById('lobby');
+//const playerList = document.getElementById('playerList');
+const p1Name = document.getElementById('player1');
+const p2Name = document.getElementById('player2');
 const standBtn = document.getElementById('stand');
 const hitBtn = document.getElementById('hit');
 const bgCanvas = document.getElementById('bgCanvas');
 const canvas = document.getElementById('gameCanvas');
 const noCanvas = document.getElementById('gameText');
 const cardImg = document.getElementById('card');
+const resultsScreen = document.getElementById('results');
+const resultsTxt = document.getElementById('gameResult');
+const resultsBtn = document.getElementById('endGame');
 const desiredX = 1280;
 const desiredY = 720;
 var multiplierX = width / desiredX;
@@ -344,19 +350,51 @@ function getImage(card) { //it does this even if the canvas isnt displaying
     images.push(img);
 }
 
-socket.on('game end', (winner) => {
-    roomCode.style.display = "block";
-    roomCode.textContent = ` ${winner}`;
+socket.on('winner', () => {
+    //roomCode.style.display = "block";
+    resultsTxt.textContent = `You win ${username}!!!`;
+    showResults();
+});
 
+socket.on('loser', () => {
+    resultsTxt.textContent = `You lose ${username}!!!`;
+    showResults();
+});
+
+socket.on('draw', () => {
+    resultsTxt.textContent = `It's a draw!`;
+    showResults();
+});
+
+function showResults() {
+    noCanvas.style.display = "none";
+    canvas.style.display = "none";
+    startBtn.disabled = true;
     hitBtn.disabled = true;
     standBtn.disabled = true;
-});
+    controls.style.display = "none";
+
+    resultsScreen.style.display = "block";
+};
+
+resultsBtn.addEventListener('click', () => {
+    roomForm.style.display = "block";
+    joinForm.style.display = "block";
+
+    resultsScreen.style.display = "none";
+
+    usernameTxt.value = '';
+    roomTxt.value = '';
+
+    joinUserTxt.value = '';
+    joinTxt.value = '';
+})
 
 //==================================================== Room Section ====================================================
 socket.on('room created', (roomName) => {
     roomCode.style.display = "block";
     roomCode.textContent = `Room Code: ${roomName}`;
-    playerList.style.display = "block";
+    lobby.style.display = "block";
 
     //canvas.style.display = "block";
     //controls.style.display = "block";
@@ -368,7 +406,7 @@ socket.on('room created', (roomName) => {
 socket.on('room joined', (roomName) => {
     roomCode.style.display = "block";
     roomCode.textContent = `Room Code: ${roomName}`;
-    playerList.style.display = "block";
+    lobby.style.display = "block";
 
     //canvas.style.display = "block";
     //controls.style.display = "block";
@@ -377,18 +415,20 @@ socket.on('room joined', (roomName) => {
 });
 
 socket.on('update users', (usersInRoom) => {
-    playerList.textContent = "Players: "
-    usersInRoom.forEach(function(user) {
-        playerList.textContent += `${user.username}, `;
-    })
+    p1Name.textContent = `${usersInRoom[0].username}`;
+    p2Name.textContent = `${usersInRoom[1].username}`;
 });
 
 socket.on('already exists', () => {
-    alert("Session already exists");
+    alert("A room already exists with this ID!");
+});
+
+socket.on('doesnt exist', () => {
+    alert("No room exists with this ID!");
 });
 
 socket.on('session full', () => {
-    alert("Session is full");
+    alert("This room is full!");
 });
 
 socket.on('ready to begin', () => {
@@ -402,11 +442,13 @@ socket.on('start game', () => {
         noCanvas.style.display = "block";
     //}
 
-    playerList.style.display = "none";
+    lobby.style.display = "none";
     roomCode.style.display = "none";
     
     controls.style.display = "block";
     startBtn.style.display = "none";
+
+    resultsTxt.textContent = `You win ${username}!`
 });
 
 var roomTxt = document.getElementById('gameid');
@@ -445,7 +487,6 @@ joinForm.addEventListener('submit', function(e) {
         //controls.style.display = "block";
         //roomForm.style.display = "none";
         //joinForm.style.display = "none";
-
     };
 });
 

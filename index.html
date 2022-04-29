@@ -2,6 +2,7 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="/test.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Game</title>
   </head>
 
@@ -24,9 +25,17 @@
 
     <div id="game">
 
-      <h1 id="roomCode"></h1>
-      <p id="playerList">Players: </p>
+      <div id="lobby">
+        <h1 id="roomCode"></h1>
 
+        <p>Players:</p>
+        <ul id="playerList">
+          <li id="player1"></li>
+          <li id="player2"></li>
+        </ul>
+
+      </div>
+      
       <button id="startBtn" disabled="true">Begin Game</button>
 
       <form id="createForm" action="#">
@@ -60,13 +69,8 @@
 
       </div>
 
-      <div id="cardTest">
-
-      </div>
-
-
       <img id="scale-image">
-  
+
       <div id="controls">
         <button id="hit" disabled="true">Hit</button>
         <button id="stand" disabled="true">Stand</button>
@@ -75,8 +79,12 @@
         <p id="turn"></p>
         <p id="score">Your Total: </p>
       </div>
-   
 
+      <div id="results">
+        <h1 id="gameResult">Winner</h1>
+        <button id="endGame">Back to Menu</button>
+      </div>
+  
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
