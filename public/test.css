@@ -160,8 +160,7 @@ body {
     text-align: center;
     background-color: grey;
     padding: 5px;
-    animation-name: result;
-    animation-duration: 0.5s;
+
 }
 
 #roomCode {
@@ -193,6 +192,12 @@ body {
     background-color: white;
     user-select: none;
     padding: 1px;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+}
+
+#card:hover {
+    transform: rotateY(180deg)
 }
 
 .hearts, .diamonds {

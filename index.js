@@ -42,17 +42,6 @@ function next_turn() {
     io.to(joiner.id).emit("turn")
 };
 
-function get_users_in_room(roomName) {
-    let usersInRoom = [];
-
-    let currentRoom = rooms.find(item => item.roomName == roomName);
-
-    usersInRoom.push(currentRoom.p1);
-    usersInRoom.push(currentRoom.p2);
-
-    io.to(roomName).emit("update users", usersInRoom);
-};
-
 function draw_card(totalScore = 0) {
     var resultNum = cards[Math.floor(Math.random()*cards.length)];
     var resultSuit = suit[Math.floor(Math.random()*suit.length)];
@@ -155,15 +144,17 @@ function create_room(username, roomName, socket) {
         rooms.push(room);
         socket.join(roomName);
         io.to(roomName).emit("room created", roomName);
-        get_users_in_room(roomName);
+        //get_users_in_room(roomName);
     } else {
         io.to(socket.id).emit("already exists");
     };
 };
 
 function join_room(username, roomName, socket) {
-    if (io.of("/").adapter.rooms.get(roomName)) { 
-        const playersInRoom = io.of("/").adapter.rooms.get(roomName).size;
+    let roomSocket = io.of("/").adapter.rooms.get(roomName);
+    let room = get_room(roomName);
+    if (room) { 
+        const playersInRoom = roomSocket.size;
 
         if (playersInRoom < 2) {
             const user = {
@@ -177,14 +168,15 @@ function join_room(username, roomName, socket) {
             joiningRoom.p2connection = 'connected'
 
             users.push(user);
-            joiners.push(user); //remove
+            //joiners.push(user); //remove
             socket.join(roomName);
-            io.to(roomName).emit("room joined", roomName);
-            io.to(joiningRoom.p1.id).emit("ready to begin")
-            get_users_in_room(roomName);
+            io.to(roomName).emit("room joined", roomName, joiningRoom.p1.username);
+            io.to(joiningRoom.p1.id).emit("ready to begin", username);
+            //get_users_in_room(roomName);
         } else {
             io.to(socket.id).emit("session full");
         }
+        
     } else {
         io.to(socket.id).emit("doesnt exist");
     }
@@ -293,8 +285,6 @@ function stand(roomName) {
         currentRoom.p2status = 'stand';
     };
 
-    //io.to(roomName).emit('stood');
-
     if (currentRoom.p1status == 'stand' && currentRoom.p2status == 'stand') {
         //io.to(roomName).emit('game end', determine_winner(roomName));
         end_game(roomName);
@@ -306,7 +296,6 @@ function stand(roomName) {
         }
     }
 
-    //console.log(currentRoom);
 };
 
 function end_game(roomName) {
@@ -325,7 +314,6 @@ function end_game(roomName) {
     } else {
         io.to(roomName).emit('draw');
     }
-    //io.to(roomName).emit('game end', determine_winner(roomName));
 
     io.socketsLeave(roomName);
 
@@ -338,12 +326,12 @@ function end_game(roomName) {
     console.log(io.of("/").adapter.rooms.get(roomName));
 }
 
-io.on('connection', (socket) => {
+io.on('connection', (socket) => {                           //Local Storage store game ID, on reconnect, connect to it.
     socket.on("create room", ({username, roomName}) => {
         create_room(username, roomName, socket);
     });
 
-    socket.on("join room", ({username, roomName}) => { // add IF Room Exists
+    socket.on("join room", ({username, roomName}) => {
         join_room(username, roomName, socket);
     });
 
@@ -376,7 +364,7 @@ io.on('connection', (socket) => {
 
         if (room) {
             socket.join(room.roomName);
-            io.to(socket.id).emit('start game');
+            io.to(socket.id).emit('start game', room.roomName);
         }
     });
 
@@ -385,9 +373,44 @@ io.on('connection', (socket) => {
         console.log( socket.client.conn.server.clientsCount + " users connected");
 
         let room = find_room(socket.id);
+        let currentRoomIndex = rooms.findIndex(item => item.roomName == room.roomName);
         if (room) {
-            io.to(room.roomName).emit('logoff', socket.id);
+
+            if (room.gameStatus == 'lobby') {
+
+                if (socket.id == room.p2.id) {
+                    console.log(`${room.roomName}: Player 2 left while in lobby.`)
+                    room.p2 = null;
+                    room.p2connection = 'none';
+                    io.to(room.p1.id).emit("player left lobby");
+                } else if (socket.id == room.p1.id) {
+                    console.log(`${room.roomName}: Player 1 left while in lobby, closing room.`)
+                    io.to(room.roomName).emit("host left lobby");
+                    io.socketsLeave(room.roomName);
+                    rooms.splice(currentRoomIndex);
+                }
+
+            } else if (room.gameStatus == 'playing') {
+
+                if (socket.id == room.p2.id) {
+                    console.log(`${room.roomName}: Player 2 disconnected while in game.`)
+                    room.p2connection = 'disconnected';
+                    io.to(room.roomName).emit('logoff', socket.id);
+                    io.to(room.p1.id).emit("player left game");
+                } else if (socket.id == room.p1.id) {
+                    console.log(`${room.roomName}: Player 1 disconnected while in game.`)
+                    room.p1connection = 'disconnected';
+                    io.to(room.p1.id).emit("host left game");
+                }
+                
+            }
+
+            if (room.p1connection == 'disconnected' && room.p2connection == 'disconnected') {
+                console.log(`${room.roomName}: Both players disconnected, so closing room.`)
+                rooms.splice(currentRoomIndex);
+            }
         }
+  
     });
 });
 

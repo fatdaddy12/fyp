@@ -162,6 +162,9 @@ var p2cards = [];
 let currentTurn = 1;
 var player = 1;
 
+let rejoinRoom = localStorage.getItem('room');
+console.log(rejoinRoom);
+
 playerTxt.textContent = `Player ${currentTurn} Turn`
 scoreTxt.textContent = `Your Total: ${p1score}`;
 
@@ -174,8 +177,7 @@ canvas.width = (desiredX * multiplierX) * 0.7
 console.log(canvas.height);
 console.log(canvas.width);
 
-const ctx = canvas.getContext('2d');
-//ctx.font = "48px serif";
+
 
 var cardHeight = 100;
 var cardWidth = 65;
@@ -183,40 +185,10 @@ var cardWidth = 65;
 standBtn.addEventListener('click', stand);
 hitBtn.addEventListener('click', hit);
 
-//Functions
+const ctx = canvas.getContext('2d');
+
 function card(img, x, y) {
-
-    /*let originX = canvas.width / 2;
-    let originY = canvas.height / 2;
-
-    let distanceX = originX - x;
-    let distanceY = originY - y;
-
-    let steps = 100;
-    let progress = 0;
-
-    let travelX = distanceX / steps * progress;
-    let travelY = distanceY / steps * progress;
-
-    if (progress < steps) {
-        progress += 1;
-        x += distanceX;
-        y += distanceY;
-    }
-
-    ctx.drawImage(img, originX, originY, (65 * multiplierX), (100 * multiplierX));*/
-
     ctx.drawImage(img, x, y, (65 * multiplierX), (100 * multiplierX));
-    
-
-    //ctx.beginPath();
-    //ctx.rect(x, y, (65 * multiplierX), (100 * multiplierX));
-    //ctx.strokeStyle = "rgb(0, 0, 0)";
-    //ctx.stroke();
-    //ctx.closePath();    
-
-    //x += 1;
-    //y += 1;
 }
 
 //requestAnimationFrame(draw);
@@ -249,36 +221,18 @@ function draw() {
         if (type == '4g') {
             p1cards.forEach(function(item) {
                 let img = images.find(image => image.src.includes(`/assets/${item.resultNum}_of_${item.resultSuit}.svg`));
-                
-                /*if (i == 0 && player == 1) {
-                    img.src = `/assets/Card_back.svg`;
-                } else {
-                    img.src = `/assets/${item.resultNum}_of_${item.resultSuit}.svg`;
-                };*/
 
-                
                 card(img, x, y);
                 x += ((cardWidth * multiplierX) + 5);
                 i++;
-                //y += 5;
-    
-                //makCard(item.resultNum, item.resultSuit);
             });
     
             p2cards.forEach(function(item) {
-                /*var img = new Image();
-                if (i2 == 0 && player == 0) {
-                    img.src = `/assets/Card_back.svg`;
-                } else {
-                    img.src = `/assets/${item.resultNum}_of_${item.resultSuit}.svg`;
-                };*/
-
                 let img = images.find(image => image.src.includes(`/assets/${item.resultNum}_of_${item.resultSuit}.svg`));
                 
                 card(img, x2, y2);
                 x2 += ((cardWidth * multiplierX) + 5);
                 i2++;
-                //y += 5;
             });
         }
 
@@ -304,12 +258,6 @@ function hit() {
 };
 
 socket.on('hitted', (p1score, p2score, currentTurn) => {
-    //var item = document.createElement('li');
-    //item.textContent = `${resultNum} of ${resultSuit}`;
-    //messages.appendChild(item);
-    //window.scrollTo(0, document.body.scrollHeight);
-
-    //drawCard(resultNum, resultSuit);
     p1cards = p1score;
     p2cards = p2score;
 
@@ -321,7 +269,6 @@ socket.on('hitted', (p1score, p2score, currentTurn) => {
         p2cards.forEach(element => countingScore += element.value)
     };
 
-    //getImage(currentTurn);
     drawCards();
 
     if (batteryLevel > 65 || batteryCharging == true) {
@@ -346,7 +293,6 @@ socket.on('new card', (card) => {
 function getImage(card) { //it does this even if the canvas isnt displaying
     let img = new Image();
     img.src = `/assets/${card.resultNum}_of_${card.resultSuit}.svg`
-    //console.log(`${img.src} at ${Date.now()}`);
     images.push(img);
 }
 
@@ -367,19 +313,22 @@ socket.on('draw', () => {
 });
 
 function showResults() {
-    noCanvas.style.display = "none";
-    canvas.style.display = "none";
     startBtn.disabled = true;
     hitBtn.disabled = true;
     standBtn.disabled = true;
     controls.style.display = "none";
 
     resultsScreen.style.display = "block";
+
+    p2Name.textContent = 'Waiting for other player...'
+
+    localStorage.removeItem('room');
 };
 
 resultsBtn.addEventListener('click', () => {
-    roomForm.style.display = "block";
-    joinForm.style.display = "block";
+    show_start_menu();
+    noCanvas.style.display = "none";
+    canvas.style.display = "none";
 
     resultsScreen.style.display = "none";
 
@@ -389,6 +338,15 @@ resultsBtn.addEventListener('click', () => {
     joinUserTxt.value = '';
     joinTxt.value = '';
 })
+
+function show_lobby() {
+    lobby.style.display = "block";
+}
+
+function show_start_menu() {
+    roomForm.style.display = "block";
+    joinForm.style.display = "block";
+}
 
 //==================================================== Room Section ====================================================
 socket.on('room created', (roomName) => {
@@ -401,9 +359,10 @@ socket.on('room created', (roomName) => {
     roomForm.style.display = "none";
     joinForm.style.display = "none";
     startBtn.style.display = "block";
+    p1Name.textContent = `${username}`;
 });
 
-socket.on('room joined', (roomName) => {
+socket.on('room joined', (roomName, player1) => {
     roomCode.style.display = "block";
     roomCode.textContent = `Room Code: ${roomName}`;
     lobby.style.display = "block";
@@ -412,11 +371,7 @@ socket.on('room joined', (roomName) => {
     //controls.style.display = "block";
     roomForm.style.display = "none";
     joinForm.style.display = "none";
-});
-
-socket.on('update users', (usersInRoom) => {
-    p1Name.textContent = `${usersInRoom[0].username}`;
-    p2Name.textContent = `${usersInRoom[1].username}`;
+    p1Name.textContent = `${player1}`
 });
 
 socket.on('already exists', () => {
@@ -431,11 +386,30 @@ socket.on('session full', () => {
     alert("This room is full!");
 });
 
-socket.on('ready to begin', () => {
+socket.on('ready to begin', (username) => {
     startBtn.disabled = false;
+    p2Name.textContent = `${username}`
 });
 
-socket.on('start game', () => {
+socket.on('player left lobby', () => {
+    startBtn.disabled = true;
+    p2Name.textContent = 'Waiting for other player...'
+})
+
+socket.on('host left lobby', () => {
+    show_start_menu();
+    p1Name.textContent = 'You shouldnt see this';
+})
+
+socket.on('player left game', () => {
+    console.log('Player left');
+});
+
+socket.on('host left game', () => {
+    console.log('Host left');
+});
+
+socket.on('start game', (roomName) => {
     //if (slowInternet == false) {
     //    canvas.style.display = "block";
     //} else {
@@ -448,7 +422,7 @@ socket.on('start game', () => {
     controls.style.display = "block";
     startBtn.style.display = "none";
 
-    resultsTxt.textContent = `You win ${username}!`
+    localStorage.setItem('room', roomName);
 });
 
 var roomTxt = document.getElementById('gameid');
@@ -483,6 +457,8 @@ joinForm.addEventListener('submit', function(e) {
         socket.emit("join room", {username, roomName});
         player = 2;
 
+        p2Name.textContent = username;
+
         //canvas.style.display = "block";
         //controls.style.display = "block";
         //roomForm.style.display = "none";
@@ -511,27 +487,33 @@ function drawCards() {
     };
 
     p1cards.forEach(function(item) {
-        let newCard = makeCard(item.resultSuit, item.resultNum);
+        let newCard = makeCardText(item.resultSuit, item.resultNum);
+        let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
 
         if (player == 1) {
             bottomCards.appendChild(newCard);
+            bottomCards.appendChild(newCardImg);    //rm
         } else {
             topCards.appendChild(newCard);
+            topCards.appendChild(newCardImg);    //rm
         };
     });
 
     p2cards.forEach(function(item) {
-        let newCard = makeCard(item.resultSuit, item.resultNum);
+        let newCard = makeCardText(item.resultSuit, item.resultNum);
+        let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
 
         if (player == 1) {
             topCards.appendChild(newCard);
+            topCards.appendChild(newCardImg);    //rm
         } else {
             bottomCards.appendChild(newCard);
+            bottomCards.appendChild(newCardImg);    //rm
         };
     });
 };
 
-function makeCard(suit, num) {
+function makeCardText(suit, num) {
     const newDiv = document.createElement("div");
     const newCardValue = document.createElement("p");
     const newCardSuit = document.createElement("p");
@@ -579,6 +561,13 @@ function makeCard(suit, num) {
 
     return newDiv;
 };
+
+function makeCardImg(suit, num) {
+    //const newImg = document.createElement('img');
+    let img = images.find(image => image.src.includes(`/assets/${num}_of_${suit}.svg`));
+
+    return img;
+}
 
 function animateCard(passedTurn) {
     console.log(`Last turn was ${passedTurn}`); //CT = 1: Player 1 Turn (bottom/top)     CT = 2: Player 2 Turn (top/bottom)
