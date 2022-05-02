@@ -92,6 +92,16 @@ body {
     box-sizing: border-box;
 }
 
+#reconnectDiv {
+    display: none;
+    margin-top: 50px;
+    background-color: rebeccapurple;
+    padding: 2px;
+    width: auto;
+    max-width: 500px;
+    margin: auto;
+}
+
 @media only screen and (max-width: 600px) {
     #createForm {
         background-color: red;

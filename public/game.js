@@ -96,8 +96,8 @@ navigator.getBattery().then(function(battery) {
     batteryLevelTxt.textContent = `Battery Level: ${batteryLevel}%`;
     batteryChargingTxt.textContent = `Battery Charging: ${batteryCharging}`;
 
-    console.log(batteryCharging);
-    console.log(batteryLevel);
+    console.log(`Battery Charging: ${batteryCharging}`);
+    console.log(`Battery Level: ${batteryLevel}%`);
 
     battery.addEventListener('chargingchange', function() {
         batteryCharging = battery.charging;
@@ -160,24 +160,26 @@ var p1cards = [];
 var p2score = 0;
 var p2cards = [];
 let currentTurn = 1;
-var player = 1;
+//var player = 1;
 
+let rejoinForm = document.getElementById('reconnectDiv');
 let rejoinRoom = localStorage.getItem('room');
-console.log(rejoinRoom);
+if (rejoinRoom) {
+    console.log(`Retrieved from local storage: ${rejoinRoom}`);
+    rejoinForm.style.display = 'block';
+};
 
 playerTxt.textContent = `Player ${currentTurn} Turn`
 scoreTxt.textContent = `Your Total: ${p1score}`;
 
-console.log(multiplierX);
-console.log(multiplierY);
+console.log(`Multiplier X: ${multiplierX}`);
+console.log(`Multiplier Y: ${multiplierY}`);
 
 canvas.height = (desiredY * multiplierX) * 0.7
 canvas.width = (desiredX * multiplierX) * 0.7
 
-console.log(canvas.height);
-console.log(canvas.width);
-
-
+console.log(`Canvas Height: ${canvas.height}`);
+console.log(`Canvas Width: ${canvas.width}`);
 
 var cardHeight = 100;
 var cardWidth = 65;
@@ -203,17 +205,11 @@ function draw() {
         var x2 = 0;
         var y2 = 0;
     
-        if (player == 0) { //if player 1, P1cards is displayed at the bottom
-            x = 5;
-            y = canvas.height / 2;
-            x2 = 5;
-            y2 = 5;
-        } else { //If player 2, P1 cards is displayed at the top
-            x = 5;
-            y = 5;
-            x2 = 5;
-            y2 = canvas.height / 2;
-        }
+
+        x = 5;
+        y = canvas.height / 2;
+        x2 = 5;
+        y2 = 5;
 
         let i = 0;
         let i2 = 0;
@@ -263,11 +259,7 @@ socket.on('hitted', (p1score, p2score, currentTurn) => {
 
     var countingScore = 0;
 
-    if (player == 1) {
-        p1cards.forEach(element => countingScore += element.value)
-    } else {
-        p2cards.forEach(element => countingScore += element.value)
-    };
+    p1cards.forEach(element => countingScore += element.value)
 
     drawCards();
 
@@ -322,6 +314,7 @@ function showResults() {
 
     p2Name.textContent = 'Waiting for other player...'
 
+    console.log('Removing from local storage');
     localStorage.removeItem('room');
 };
 
@@ -423,6 +416,7 @@ socket.on('start game', (roomName) => {
     startBtn.style.display = "none";
 
     localStorage.setItem('room', roomName);
+    console.log(`Set room in local storage ${roomName}`);
 });
 
 var roomTxt = document.getElementById('gameid');
@@ -445,7 +439,6 @@ roomForm.addEventListener('submit', function(e) {
         username = usernameTxt.value;
         roomName = roomTxt.value;
         socket.emit("create room", {username, roomName});
-        player = 1;
     }
 });
 
@@ -455,7 +448,6 @@ joinForm.addEventListener('submit', function(e) {
         username = joinUserTxt.value;
         roomName = joinTxt.value;
         socket.emit("join room", {username, roomName});
-        player = 2;
 
         p2Name.textContent = username;
 
@@ -486,30 +478,23 @@ function drawCards() {
         bottomCards.removeChild(bottomCards.lastChild);
     };
 
+    let i1 = 0;
+
     p1cards.forEach(function(item) {
         let newCard = makeCardText(item.resultSuit, item.resultNum);
-        let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
+        //let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
+        bottomCards.appendChild(newCard);
 
-        if (player == 1) {
-            bottomCards.appendChild(newCard);
-            bottomCards.appendChild(newCardImg);    //rm
-        } else {
-            topCards.appendChild(newCard);
-            topCards.appendChild(newCardImg);    //rm
-        };
     });
+
+    let i2 = 0;
 
     p2cards.forEach(function(item) {
         let newCard = makeCardText(item.resultSuit, item.resultNum);
-        let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
+        //let newCardImg = makeCardImg(item.resultSuit, item.resultNum); //rm
 
-        if (player == 1) {
-            topCards.appendChild(newCard);
-            topCards.appendChild(newCardImg);    //rm
-        } else {
-            bottomCards.appendChild(newCard);
-            bottomCards.appendChild(newCardImg);    //rm
-        };
+        topCards.appendChild(newCard);
+
     });
 };
 
@@ -570,23 +555,12 @@ function makeCardImg(suit, num) {
 }
 
 function animateCard(passedTurn) {
-    console.log(`Last turn was ${passedTurn}`); //CT = 1: Player 1 Turn (bottom/top)     CT = 2: Player 2 Turn (top/bottom)
+    console.log(`Last turn was ${passedTurn}`);
     
-    if (player == 1) {
-        if (passedTurn == 1) {
-            console.log(`${passedTurn} Bottom Cards`);
-            bottomCards.children[bottomCards.children.length - 1].classList.toggle('latestCard');
-        } else {
-            console.log(`${passedTurn} Top Cards`);
-            topCards.children[topCards.children.length - 1].classList.toggle('latestCard');
-        }
+    if (passedTurn == 1) {
+        bottomCards.children[bottomCards.children.length - 1].classList.toggle('latestCard');
     } else {
-        if (passedTurn == 2) {
-            console.log(`${passedTurn} Bottom Cards`);
-            bottomCards.children[bottomCards.children.length - 1].classList.toggle('latestCard');
-        } else {
-            console.log(`${passedTurn} Top Cards`);
-            topCards.children[topCards.children.length - 1].classList.toggle('latestCard');
-        }
+        topCards.children[topCards.children.length - 1].classList.toggle('latestCard');
     }
+
 };

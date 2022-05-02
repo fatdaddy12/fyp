@@ -184,7 +184,7 @@ function join_room(username, roomName, socket) {
 };
 
 function init_game(roomName) {
-    io.to(roomName).emit('start game');
+    io.to(roomName).emit('start game', roomName);
 
     let p1card = draw_card();
     let p2card = draw_card();
@@ -205,9 +205,15 @@ function init_game(roomName) {
 
     io.to(roomName).emit('hitted', p1score, p2score, currentTurn);
 
-    let host = get_host(roomName);
-    io.to(host).emit("turn");
+    io.to(currentRoom.p1.id).emit("turn");
 };
+
+function send_cards(p1score, p2score, currentTurn, currentRoom) {
+    io.to(currentRoom.p1.id).emit('hitted', p1score, p2score, currentTurn);
+    io.to(currentRoom.p2.id).emit('hitted', p2score, p1score, currentTurn);
+
+    //io.to(roomName).emit('hitted', p1score, p2score, currentTurn);
+}
 
 function hit(roomName) {
     console.log(`HIT: The room you are emitting from is ${roomName}`);
@@ -261,7 +267,7 @@ function hit(roomName) {
     let p1score = currentRoom.p1cards;
     let p2score = currentRoom.p2cards;
 
-    io.to(roomName).emit('hitted', p1score, p2score, currentTurn);
+    send_cards(p1score, p2score, currentTurn, currentRoom);
 
     //console.log(currentRoom);
 };
@@ -359,13 +365,6 @@ io.on('connection', (socket) => {                           //Local Storage stor
 
     socket.on('connect', () => {
         io.emit('logon', socket.id);
-
-        let room = find_room(socket.id);
-
-        if (room) {
-            socket.join(room.roomName);
-            io.to(socket.id).emit('start game', room.roomName);
-        }
     });
 
     socket.on('disconnect', () => {
