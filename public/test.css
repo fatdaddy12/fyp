@@ -190,7 +190,7 @@ body {
     flex-wrap: wrap;
 }
 
-#card {
+#card, #cardBack {
     text-align: center;
     font-size: 24px;
     width: 10%;
@@ -204,6 +204,10 @@ body {
     padding: 1px;
     transform-style: preserve-3d;
     transition: transform 0.5s;
+}
+
+#cardBack {
+    background-color: red;
 }
 
 #card:hover {
