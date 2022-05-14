@@ -1,7 +1,5 @@
 let cards = ['ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'jack', 'queen', 'king'];
 let suit = ['diamonds', 'hearts', 'spades', 'clubs'];
-let imageStore = document.getElementById('scale-image');
-let slowInternet = false;
 
 //Monitor Network Connection https://developer.mozilla.org/en-US/docs/Web/API/Network_Information_API
 let connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -14,13 +12,13 @@ if (connection) {
 let images = [];
 
 let connTxt = document.getElementById('networkSpeed');
-
-console.log(`Connection type: ${type}`);
+console.log(connection);
+//console.log(`Connection type: ${type}`);
 connTxt.textContent += type;
 
-if (type == '4g') {
-    loadImages();
-}
+//if (type == '4g') {
+//    loadImages();
+//}
 
 console.log(images);
 
@@ -28,39 +26,35 @@ function loadImages() {
     cards.forEach(function(itemCard) {
         suit.forEach(function(itemSuit) {
             let image = new Image();
-            image.src = `/assets/${itemCard}_of_${itemSuit}.svg`
+            image.src = `/assets/cards/${itemCard}_of_${itemSuit}.svg`
             images.push(image);
         })
     });
 
     let imageBack = new Image();
-    imageBack.src = '/assets/Card_back.svg';
+    imageBack.src = '/assets/cards/Card_back.svg';
     images.push(imageBack);
 }
 
 function updateConnectionStatus() {
+    console.log(connection);
     console.log("Connection type changed from " + type + " to " + connection.effectiveType);
     type = connection.effectiveType;
 
     connTxt.textContent = `Network Speed: ${type}`;
 
-    if (type == '4g' && !images.length) {
-        loadImages();
-    }
+    //if (type == '4g' && !images.length) {
+    //    loadImages();
+    //}
 }
 
-let imageResolution = '';                                       //Background Image changes with Screen Size - Text size, resolution, orientation, 1280x720 base Size?
+let imageResolution = '';
 
 if (type == '4g') {
     console.log('Fast Speed')
-    imageResolution = '_high';
 } else {
     console.log('Slow speed');
-    imageResolution = '_low';
 }
-
-let imgDisplay = `assets/image${imageResolution}.jpg`;
-imageStore.src = imgDisplay;
 
 //Monitor Screen Stuff https://developer.mozilla.org/en-US/docs/Web/API/Screen/orientation
 let orientation = screen.orientation;
@@ -88,8 +82,10 @@ function resizeGame() {
     orientationTxt.textContent = `Orientation: ${orientation.type}, ${orientation.angle}`
     //console.log(`${width}x${height}, MultplierX: ${multiplierX}, MultiplierY: ${multiplierY}, Orientation: ${orientation}`)
 
-    canvas.height = (desiredY * multiplierX) * 0.7
-    canvas.width = (desiredX * multiplierX) * 0.7
+    //canvas.height = (desiredY * multiplierX) * 0.7
+    //canvas.width = (desiredX * multiplierX) * 0.7
+
+    renderer.setSize( width * 0.7, height * 0.7 );
 };
 
 //Battery Monitor https://developer.mozilla.org/en-US/docs/Web/API/Battery_Status_API
@@ -132,15 +128,15 @@ const chatBtn = document.getElementById('chat-hide');
 const chatWindow = document.getElementById('chat');
 chatBtn.addEventListener('click', showChat);
 
-var showChat = false;
+var chatVisible = false;
 
 function showChat() {
-    if (showChat == false) {
+    if (chatVisible == false) {
         chatWindow.style.display = "block";
-        showChat = true;
+        chatVisible = true;
     } else {
         chatWindow.style.display = "none";
-        showChat = false;
+        chatVisible = false;
     }
 }
 
@@ -151,8 +147,8 @@ const p1Name = document.getElementById('player1');
 const p2Name = document.getElementById('player2');
 const standBtn = document.getElementById('stand');
 const hitBtn = document.getElementById('hit');
-const bgCanvas = document.getElementById('bgCanvas');
-const canvas = document.getElementById('gameCanvas');
+//const bgCanvas = document.getElementById('bgCanvas');
+//const canvas = document.getElementById('gameCanvas');
 const noCanvas = document.getElementById('gameText');
 const cardImg = document.getElementById('card');
 const resultsScreen = document.getElementById('results');
@@ -199,11 +195,11 @@ scoreTxt.textContent = `Your Total: ${p1score}`;
 console.log(`Multiplier X: ${multiplierX}`);
 console.log(`Multiplier Y: ${multiplierY}`);
 
-canvas.height = (desiredY * multiplierX) * 0.7
-canvas.width = (desiredX * multiplierX) * 0.7
+//canvas.height = (desiredY * multiplierX) * 0.7
+//canvas.width = (desiredX * multiplierX) * 0.7
 
-console.log(`Canvas Height: ${canvas.height}`);
-console.log(`Canvas Width: ${canvas.width}`);
+//console.log(`Canvas Height: ${canvas.height}`);
+//console.log(`Canvas Width: ${canvas.width}`);
 
 var cardHeight = 100;
 var cardWidth = 65;
@@ -211,15 +207,13 @@ var cardWidth = 65;
 standBtn.addEventListener('click', stand);
 hitBtn.addEventListener('click', hit);
 
-const ctx = canvas.getContext('2d');
+//const ctx = canvas.getContext('2d');
 
 function card(img, x, y) {
     ctx.drawImage(img, x, y, (65 * multiplierX), (100 * multiplierX));
 }
 
 //requestAnimationFrame(draw);
-
-
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -282,12 +276,13 @@ socket.on('rejoined', (p1score, p2score, currentRoom, id) => {
     p1cards.forEach(element => countingScore += element.value)
     scoreTxt.textContent = `Your Total: ${countingScore}`;
 
+    usernameForm.style.display = "none";
     joinForm.style.display = "none";
     roomForm.style.display = "none";
     rejoinForm.style.display = "none";
 
-    show_game();
-    clearBoard();
+    showGame();
+    //clearBoard();
     redrawCards(p1score, p2score);
 
     //drawCards();
@@ -307,7 +302,7 @@ socket.on('turn', () => {
 let countingScore = 0;
 
 socket.on('new card', (card, currentTurn) => {
-    //console.log(card);
+    console.log(card);
     //getImage(card);
     if (host == true) {
         if (currentTurn == 1) {
@@ -355,40 +350,44 @@ function showResults() {
 };
 
 resultsBtn.addEventListener('click', () => {
-    clearBoard();
-    show_start_menu();
+    showStartMenu();
     noCanvas.style.display = "none";
-    canvas.style.display = "none";
+    //canvas.style.display = "none";
 
     resultsScreen.style.display = "none";
 
     usernameTxt.value = '';
     roomTxt.value = '';
 
-    joinUserTxt.value = '';
     joinTxt.value = '';
 
     countingScore = 0;
 })
 
-function show_lobby() {
+function showLobby() {
     roomForm.style.display = "none";
     joinForm.style.display = "none";
+    usernameForm.style.display = "none";
     lobby.style.display = "block";
     startBtn.disabled = true;
     hitBtn.disabled = true;
     standBtn.disabled = true;
 }
 
-function show_start_menu() {
+function showStartMenu() {
+    usernameForm.style.display = "block";
     roomForm.style.display = "block";
     joinForm.style.display = "block";
+    lobby.style.display = "none";
+    roomForm.style.display = "block";
+    joinForm.style.display = "block";
+    p2Name.textContent = 'Waiting for other player...'
 }
 
-function show_game() {
+function showGame() {
+    clearBoard();
     lobby.style.display = "none";
     noCanvas.style.display = "block";
-    //}
 
     lobby.style.display = "none";
     roomCode.style.display = "none";
@@ -403,7 +402,7 @@ let inGame = false;
 socket.on('room created', (roomName) => {
     roomCode.style.display = "block";
     roomCode.textContent = `Room Code: ${roomName}`;
-    show_lobby();
+    showLobby();
     startBtn.style.display = "block";
     p1Name.textContent = `${username}`;
 });
@@ -411,7 +410,7 @@ socket.on('room created', (roomName) => {
 socket.on('room joined', (roomName, player1) => {
     roomCode.style.display = "block";
     roomCode.textContent = `Room Code: ${roomName}`;
-    show_lobby();
+    showLobby();
     p1Name.textContent = `${player1}`
 });
 
@@ -438,7 +437,10 @@ socket.on('player left lobby', () => {
 })
 
 socket.on('host left lobby', () => {
-    show_start_menu();
+    console.log('host closed')
+    alert('Host closed the lobby!');
+    console.log('its hould have alerted');
+    showStartMenu();
     lobby.style.display = "none";
     p1Name.textContent = 'You shouldnt see this';
     p2Name.textContent = 'Waiting for other player...'
@@ -456,7 +458,7 @@ socket.on('start game', (roomName) => {
     //if (slowInternet == false) {
     //    canvas.style.display = "block";
     //} else {
-    show_game();
+    showGame();
 
     localStorage.setItem('rejoinRoom', roomName);
     console.log(`Set room in local storage ${roomName}`);
@@ -479,14 +481,24 @@ socket.on('draw', () => {
     showResults();
 });
 
-var roomTxt = document.getElementById('gameid');
+var usernameForm = document.getElementById('usernameForm');
+
+usernameForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (usernameTxt.value) {
+        username = usernameTxt.value;
+        localStorage.setItem('username', username);
+    }
+})
+
 var roomForm = document.getElementById('createForm');
-var usernameTxt = document.getElementById('usernameid');
+var usernameTxt = document.getElementById('usernameId');
+var roomTxt = document.getElementById('createGameId');
 var startBtn = document.getElementById('startBtn');
+var leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
 
 var joinForm = document.getElementById('joinForm');
 var joinTxt = document.getElementById('joinGameId');
-var joinUserTxt = document.getElementById('joinUsernameId');
 
 let roomName = '';
 let username = '';
@@ -498,7 +510,6 @@ const controls = document.getElementById('controls');
 roomForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (roomTxt.value) {
-        username = usernameTxt.value;
         roomName = roomTxt.value;
         socket.emit("create room", {username, roomName});
         host = true;
@@ -508,7 +519,6 @@ roomForm.addEventListener('submit', function(e) {
 joinForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (joinTxt.value) {
-        username = joinUserTxt.value;
         roomName = joinTxt.value;
         socket.emit("join room", {username, roomName});
         host = false;
@@ -518,6 +528,11 @@ joinForm.addEventListener('submit', function(e) {
 
 startBtn.addEventListener('click', function(e) {
     socket.emit('start game', roomName);
+});
+
+leaveLobbyBtn.addEventListener('click', function(e) {
+    socket.emit('leave lobby', roomName);
+    showStartMenu();
 });
 
 // Text Based Test
@@ -538,12 +553,15 @@ function clearBoard() {
 function drawCards(card, currentTurn) {
     let newCard = null;
 
-    if (images.length) {
+    if (type == '4g') {
         newCard = makeCardImg(card.resultSuit, card.resultNum);
     } else {
         newCard = makeCardText(card.resultSuit, card.resultNum);
     }
-    newCard.classList.toggle('latestCard');
+
+    if (batteryLevel > 65 || batteryCharging == true) {
+        newCard.classList.add('latestCard');
+    } 
 
     if (host == true) {
         if (currentTurn == 1) {
@@ -571,40 +589,56 @@ function drawCards(card, currentTurn) {
 
 function redrawCards(p1cards, p2cards) {
     p1cards.forEach(function(item) {
-        let newCard = makeCardText(item.resultSuit, item.resultNum);
+        if (type == '4g') {
+            newCard = makeCardImg(item.resultSuit, item.resultNum);
+        } else {
+            newCard = makeCardText(item.resultSuit, item.resultNum);
+        }
         bottomCards.appendChild(newCard);
     });
 
     p2cards.forEach(function(item) {
-        let newCard = makeCardText(item.resultSuit, item.resultNum);
+        if (type == '4g') {
+            newCard = makeCardImg(item.resultSuit, item.resultNum);
+        } else {
+            newCard = makeCardText(item.resultSuit, item.resultNum);
+        }
         topCards.appendChild(newCard);
     })
     
 }
 
 function makeBlankCard() {
-    if (!images.length) {
+    if (!type == '4g') {
         const newDiv = document.createElement("div");
         newDiv.setAttribute("id", "cardBack");
         return newDiv;
     } else {
-        let img = images.find(image => image.src.includes(`/assets/Card_back.svg`));
-        console.log(img);
-        return img;
+        return makeBlankCardImg();
     }
 }
 
 function makeCardText(suit, num) {
-    const newDiv = document.createElement("div");
+    const cardDiv = document.createElement('div');
+    cardDiv.setAttribute('id', 'card');
+
+    const cardContainerDiv = document.createElement('div');
+    cardContainerDiv.setAttribute('id', 'cardContainer');
+
+    const cardFrontDiv = document.createElement('div');
+    cardFrontDiv.setAttribute('id', 'cardFrontText');
+
+    const cardBackDiv = document.createElement('div');
+    cardBackDiv.setAttribute('id', 'cardBackText');
+
     const newCardValue = document.createElement("p");
     const newCardSuit = document.createElement("p");
 
-    newDiv.setAttribute("id", "card");
     newCardValue.setAttribute("id", "cardValue");
     newCardSuit.setAttribute("id", "cardValue");
 
     let suitTxt = '';
-    if (suit == 'diamond') {
+    if (suit == 'diamonds') {
         suitTxt = '♦'; 
     } else if (suit == 'spades') {
         suitTxt = '♠';
@@ -626,10 +660,8 @@ function makeCardText(suit, num) {
     } else if (num == 'ace') {
         numTxt = 'A';
     } else {
-        suitTxt = ''
+        numTxt = ''
     };
-
-    newDiv.setAttribute("class", suit); //♠ ♣ ♥ ♦
 
     let parsed = parseInt(num);
 
@@ -641,18 +673,141 @@ function makeCardText(suit, num) {
     
     newCardSuit.textContent = suitTxt;
 
-    newDiv.appendChild(newCardValue);
-    newDiv.appendChild(newCardSuit);
+    cardFrontDiv.appendChild(newCardValue);
+    cardFrontDiv.appendChild(newCardSuit);
 
-    return newDiv;
+    cardContainerDiv.appendChild(cardFrontDiv);
+    cardContainerDiv.appendChild(cardBackDiv);
+
+    cardDiv.appendChild(cardContainerDiv);
+    cardDiv.setAttribute('class', suit);
+
+    return cardDiv;
 };
 
 function makeCardImg(suit, num) {
-    let img = images.find(image => image.src.includes(`/assets/${num}_of_${suit}.svg`));
+    const cardDiv = document.createElement('div');
+    cardDiv.setAttribute('id', 'card');
 
-    return img;
+    const cardContainerDiv = document.createElement('div');
+    cardContainerDiv.setAttribute('id', 'cardContainer');
+
+    const cardFrontDiv = document.createElement('div');
+    cardFrontDiv.setAttribute('id', 'cardFront');
+
+    const cardBackDiv = document.createElement('div');
+    cardBackDiv.setAttribute('id', 'cardBack');
+
+    const imgFront = new Image();
+    imgFront.src = `/assets/cards/${num}_of_${suit}.svg`;
+    imgFront.setAttribute('id', 'cardImg');
+
+    const imgBack = new Image();
+    imgBack.src = `/assets/cards/Card_back.svg`;
+    imgBack.setAttribute('id', 'cardImg');
+
+    cardFrontDiv.appendChild(imgFront);
+    cardBackDiv.appendChild(imgBack);
+
+    cardContainerDiv.appendChild(cardFrontDiv);
+    cardContainerDiv.appendChild(cardBackDiv);
+
+    cardDiv.appendChild(cardContainerDiv);
+
+    return cardDiv;
 }
 
-//Load image when connection is good.
+function makeBlankCardImg() {
+    const cardDiv = document.createElement('div');
+    cardDiv.setAttribute('id', 'card');
+
+    const cardContainerDiv = document.createElement('div');
+    cardContainerDiv.setAttribute('id', 'cardContainer');
+
+    const cardFrontDiv = document.createElement('div');
+    cardFrontDiv.setAttribute('id', 'cardFront');
+
+    const cardBackDiv = document.createElement('div');
+    cardBackDiv.setAttribute('id', 'cardBack');
+
+    const imgFront = new Image();
+    imgFront.src = `/assets/cards/Card_back.svg`;
+    imgFront.setAttribute('id', 'cardImg');
+
+    const imgBack = new Image();
+    imgBack.src = `/assets/cards/Card_back.svg`;
+    imgBack.setAttribute('id', 'cardImg');
+
+    cardFrontDiv.appendChild(imgFront);
+    cardBackDiv.appendChild(imgBack);
+
+    cardContainerDiv.appendChild(cardFrontDiv);
+    cardContainerDiv.appendChild(cardBackDiv);
+
+    cardDiv.appendChild(cardContainerDiv);
+
+    return cardDiv;
+}
+
 //Go 3D when battery is good.
 //Disconnect handling.
+
+//===================================================================================================three.js====================================================================
+let fov = 75;
+let nearClippingPlane = 0.1;
+let farClippingPane = 1000;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(fov, 16/9, nearClippingPlane, farClippingPane);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize( 1280, 720 );
+//document.body.appendChild( renderer.domElement );
+
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+const cube = new THREE.Mesh(geometry, material);
+
+const cardGeometry = new THREE.PlaneGeometry(0.65, 1);
+const cardMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide } );
+const cardModel = new THREE.Mesh(cardGeometry, cardMaterial);
+
+//const texture = new THREE.TextureLoader().load('/assets/cards/Card_back.svg');
+const texMat = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide});
+
+cardModel.position.set(0, 0, 0);
+
+const Card2 = new THREE.Mesh(cardGeometry, texMat);
+Card2.position.x = -4;
+Card2.position.y = 2.5;
+
+const axes = new THREE.AxesHelper(100);
+scene.add(cardModel);
+scene.add(Card2);
+scene.add(axes);
+
+//camera.position.y = 1;
+//camera.position.x = 2;
+camera.position.z = 5;
+
+function createCard(x = 0, y = 0) {
+    const card = new THREE.Mesh(cardGeometry, texMat);
+    card.position.set(x, y, 0);
+    scene.add(card);
+}
+
+function animate() {
+    requestAnimationFrame( animate);
+    cardModel.rotation.y += 0.01;
+    Card2.rotation.y += 0.01;
+
+    createCard(2, 3);
+
+    renderer.render(scene, camera);
+};
+
+console.log(renderer.domElement.getContext('webgl2'))
+
+if ((window.WebGLRenderingContext || window.WebGLRenderingContext) && (renderer.domElement.getContext('webgl') || renderer.domElement.getContext('experimental-webgl') || renderer.domElement.getContext('webgl2'))) {
+    //animate();
+}
+

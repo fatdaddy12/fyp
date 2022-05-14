@@ -7,6 +7,7 @@
   </head>
 
   <body>
+    <script src="/three.js"></script>
 
     <div id="chat">
       <ul id="messages"></ul>
@@ -33,35 +34,37 @@
           <li id="player1"></li>
           <li id="player2">Waiting for other player...</li>
         </ul>
-
+        <button id="startBtn" disabled="true">Begin Game</button>
+        <button id="leaveLobbyBtn">Leave Lobby</button>
       </div>
       
-      <button id="startBtn" disabled="true">Begin Game</button>
+
+      <form id="usernameForm" action="#">
+        <h1 class="formHeading">Username</h1>
+        <input class="formInput" id="usernameId" autocomplete="off" placeholder="Username"/>
+        <button class="inputBtn">Set</button>
+      </form>
 
       <form id="createForm" action="#">
-        <h1>Create Room</h1>
-        <input id="gameid" autocomplete="off" placeholder="Room ID"/>
-        <input id="usernameid" autocomplete="off" placeholder="Username"/>
-        <button>Connect</button>
+        <h1 class="formHeading">Create Room</h1>
+        <input class="formInput" id="createGameId" autocomplete="off" placeholder="Room ID"/>
+        <button class="inputBtn">Connect</button>
       </form>
 
       <form id="joinForm" action="#">
-        <h1>Join Room</h1>
-        <input id="joinGameId" autocomplete="off" placeholder="Room ID"/>
-        <input id="joinUsernameId" autocomplete="off" placeholder="Username"/>
-        <button>Connect</button>
+        <h1 class="formHeading">Join Room</h1>
+        <input class="formInput" id="joinGameId" autocomplete="off" placeholder="Room ID"/>
+        <button class="inputBtn">Connect</button>
       </form>
+
 
       <div id="reconnectDiv">
         <h1></h1>
         <button id="reconnectBtn">Reconnect to game</button>
       </div>
 
-      
-
-
       <!--<canvas id="bgCanvas" width="300" height="300"></canvas>-->
-      <canvas id="gameCanvas" width="300" height="300"></canvas>
+      <!--canvas id="gameCanvas" width="300" height="300"></canvas>-->
 
       <div id="gameText">
         <p>Other Player's Cards:</p>
@@ -75,8 +78,6 @@
         </div>
 
       </div>
-
-      <img id="scale-image">
 
       <div id="controls">
         <button id="hit" disabled="true">Hit</button>
@@ -97,5 +98,6 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/chat.js"></script>
     <script src="/game.js"></script>
+    
   </body>
 </html>

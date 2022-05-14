@@ -10,22 +10,13 @@ var cards = ['ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'jack', 'queen', 'king'];
 var suit = ['diamonds', 'hearts', 'spades', 'clubs'];
 
 var players = [];
-var turn = [];
-
 let users = [];
-let hosts = [];
-let joiners = [];
 let rooms = [];
-let score = [];
 
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
-});
-
-app.get('/game', (req, res) => {
-    res.sendFile(__dirname + '/game.html');
 });
 
 function draw_card(totalScore = 0) {
@@ -87,7 +78,7 @@ function send_card(room, card, currentTurn) {
 
 function find_room(id) {
     let room = rooms.find(item => item.p1.id == id);
-    if (!room) {
+    if (!room && rooms.find(item => item.p2)) {
         room = rooms.find(item => item.p2.id == id);
         if (!room) {
             return null;
@@ -101,10 +92,6 @@ let roomNames = [];
 
 function get_room(roomName) {
     return rooms.find(item => item.roomName == roomName);
-}
-
-function get_host(roomName) {
-    return get_room(roomName).p1.id;
 }
 
 function create_room(username, roomName, socket) {
@@ -129,7 +116,6 @@ function create_room(username, roomName, socket) {
         };
 
         users.push(user);
-        hosts.push(user); //remove
         roomNames.push(roomName);
         rooms.push(room);
         socket.join(roomName);
@@ -173,11 +159,14 @@ function join_room(username, roomName, socket) {
 
 function init_game(roomName) {
     io.to(roomName).emit('start game', roomName);
+    let currentRoom = get_room(roomName);
 
     let p1card = draw_card();
     let p2card = draw_card();
 
-    let currentRoom = get_room(roomName);
+    while (p1card == p2card) {
+        p2card = draw_card();
+    }
 
     send_card(currentRoom, p1card, 1);
     send_card(currentRoom, p2card, 2);
@@ -185,11 +174,6 @@ function init_game(roomName) {
     currentRoom.gameStatus = 'playing';
     currentRoom.p1cards.push(p1card);
     currentRoom.p2cards.push(p2card);
-
-    var p1score = currentRoom.p1cards;
-    var p2score = currentRoom.p2cards;
-
-    let currentTurn = currentRoom.turn;
 
     //io.to(roomName).emit('hitted', p1score, p2score, currentTurn);
 
@@ -220,6 +204,10 @@ function hit(roomName) {
     if (currentTurn == 1) { //If player 1 turn
         var totalScore = get_total_score(currentRoom.p1cards);
         let card = draw_card(totalScore);
+        while ((currentRoom.p1cards.find(item => item.resultNum == card.resultNum && item.resultSuit == card.resultSuit)) || (currentRoom.p2cards.find(item => item.resultNum == card.resultNum && item.resultSuit == card.resultSuit))) {
+            console.log('repeat card');
+            card = draw_card(totalScore);
+        }
         send_card(currentRoom, card, currentTurn);
         currentRoom.p1cards.push(card);
 
@@ -241,6 +229,10 @@ function hit(roomName) {
     } else if (currentTurn == 2) { //If player 2 turn
         var totalScore = get_total_score(currentRoom.p2cards);
         let card = draw_card(totalScore)
+        while ((currentRoom.p1cards.find(item => item.resultNum == card.resultNum && item.resultSuit == card.resultSuit)) || (currentRoom.p2cards.find(item => item.resultNum == card.resultNum && item.resultSuit == card.resultSuit))) {
+            console.log('repeat card');
+            card = draw_card(totalScore);
+        }
         send_card(currentRoom, card, currentTurn);
         currentRoom.p2cards.push(card);
 
@@ -260,9 +252,6 @@ function hit(roomName) {
             io.to(currentRoom.p2.id).emit('turn');
         }
     }
-
-    let p1score = currentRoom.p1cards;
-    let p2score = currentRoom.p2cards;
 
     //send_cards(p1score, p2score, currentTurn, currentRoom);
 
@@ -350,6 +339,25 @@ io.on('connection', (socket) => {                           //Local Storage stor
         stand(roomName);
     });
 
+    socket.on('leave lobby', (roomName) => {
+        let currentRoomIndex = rooms.findIndex(item => item.roomName == roomName);
+        let room = get_room(roomName);
+
+        if (socket.id == room.p1.id) {
+            console.log(`${room.roomName}: Player 1 left while in lobby, closing room.`)
+            if (room.p2) {
+                io.to(room.p2.id).emit("host left lobby");
+            }
+            io.socketsLeave(room.roomName);
+            rooms.splice(currentRoomIndex);
+        } else {
+            console.log(`${room.roomName}: Player 2 left while in lobby.`)
+            room.p2 = null;
+            room.p2connection = 'none';
+            io.to(room.p1.id).emit("player left lobby");
+        }
+    });
+
     players.push(socket);
     
     console.log(`${socket.id} connected`);
@@ -367,7 +375,7 @@ io.on('connection', (socket) => {                           //Local Storage stor
     socket.on('rejoin check', (rejoinRoom, rejoinId) => {
         let room = get_room(rejoinRoom);
         if (room) {
-            if ((room.p1.id == rejoinId && room.p1connection == 'disconnected') || (room.p2.id == rejoinId && room.p2connection == 'disconnected')) {
+            if ((room.p1 && (room.p1.id == rejoinId && room.p1connection == 'disconnected')) || (room.p2 && (room.p2.id == rejoinId && room.p2connection == 'disconnected'))) {
                 console.log(`${room.roomName}: Rejoin request valid!`);
                 io.to(socket.id).emit('rejoin valid');
             }
@@ -424,11 +432,11 @@ io.on('connection', (socket) => {                           //Local Storage stor
         //Add room ID to p1 or p2
         //Send them the score
 
-        socket.join(roomName);
         console.log(`${roomName}: User attempting rejoin`)
 
         let room = get_room(roomName);
         if (room) {
+            socket.join(roomName);
             console.log(`${roomName}: Room found!`)
 
             const user = {
