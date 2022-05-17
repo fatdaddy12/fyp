@@ -7,7 +7,7 @@ var messages = document.getElementById('messages');
 form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (input.value) {
-        socket.emit('chat message', input.value, username);
+        socket.emit('chat message', input.value, username, roomName);
         input.value = '';
     }
 });

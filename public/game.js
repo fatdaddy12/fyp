@@ -1,39 +1,64 @@
 let cards = ['ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'jack', 'queen', 'king'];
 let suit = ['diamonds', 'hearts', 'spades', 'clubs'];
 
-let capable3d = false;
-let slowInternet = false;
-let batteryAnimation = false;
-let battery3d = false;
+let capable3d = false; //Capable of 3D?
+let slowInternet = false; //Internet fast enough?
+let batteryAnimation = false; //Battery good enough for animation?
+let battery3d = false; //Battery good enough for 3D?
+
 let connection = null;
 
-let inGame = false;
+let inGame = false; //User ingame?
+
+let is3d = false; //Is game in 3D?
+let useImages = false; //Are images being used?
 
 //Monitor Network Connection https://developer.mozilla.org/en-US/docs/Web/API/Network_Information_API
+let connTxt = document.getElementById('networkSpeed');
 if ("connection" in navigator) {
     connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-}
-
-let type = null;
-if (connection) {
-    type = connection.effectiveType;
+    connectionEnvironment(connection);
     connection.addEventListener('change', updateConnectionStatus);
+    connTxt.textContent = `network effectivetype: ${connection.effectiveType}, downlink: ${connection.downlink}, rtt: ${connection.rtt}, slowint=${slowInternet}, useimages=${useImages}`
 }
 
-let images = [];
-
-let connTxt = document.getElementById('networkSpeed');
 console.log(connection);
 
-if (connection) {
-    connTxt.textContent = `network effectivetype: ${connection.effectiveType}, downlink: ${connection.downlink}, rtt: ${connection.rtt}, slowint=${slowInternet}`
-}
-
-if (connection) {
+function updateConnectionStatus() {
+    console.log('Connection changed');
+    console.log(connection);
     connectionEnvironment(connection);
+    connTxt.textContent = `network effectivetype: ${connection.effectiveType}, downlink: ${connection.downlink}, rtt: ${connection.rtt}, Slowint=${slowInternet}, useImages=${useImages}`
 }
 
-function loadImages() {
+function connectionEnvironment(connection) {
+    let slow = slowInternet;
+
+    if (connection.effectiveType != '4g') {
+        slowInternet = true;
+    } else if (connection.downlink < 1.5) {
+        slowInternet = true;
+    } else if (connection.rtt > 100) {
+        slowInternet = true;
+    } else {
+        slowInternet = false;
+    }
+
+    if (!slowInternet) {
+        useImages = true;
+    } else {
+        useImages = false;
+    }
+
+    if (inGame) {
+        if (!slowInternet && (slow != slowInternet)) {
+            console.log('redrawing');
+            redrawCards(p1cards, p2cards);
+        };
+    }
+}
+
+/* function loadImages() {
     cards.forEach(function(itemCard) {
         suit.forEach(function(itemSuit) {
             let image = new Image();
@@ -45,32 +70,7 @@ function loadImages() {
     let imageBack = new Image();
     imageBack.src = '/assets/cards/Card_back.svg';
     images.push(imageBack);
-}
-
-function updateConnectionStatus() {
-    console.log('Connection changed');
-    console.log(connection);
-    connectionEnvironment(connection);
-
-    connTxt.textContent = `network effectivetype: ${connection.effectiveType}, downlink: ${connection.downlink}, rtt: ${connection.rtt}, Slowint=${slowInternet}`
-}
-
-function connectionEnvironment(connection) {
-    if (connection.effectiveType != '4g') {
-        slowInternet = true;
-    } else if (connection.downlink < 2) {
-        slowInternet = true;
-    } else if (connection.rtt > 100) {
-        slowInternet = true;
-    } else {
-        slowInternet = false;
-    }
-
-    if (inGame) {
-        goTo3d();
-        goToImages();
-    }
-}
+} */
 
 //Battery Monitor https://developer.mozilla.org/en-US/docs/Web/API/Battery_Status_API
 let batteryCharging = true;
@@ -153,17 +153,7 @@ function goTo3d() {
     }
 }
 
-function goToImages() {
-    if (!is3d) {
-        if (!useImages && !slowInternet) {
-            redrawCards(p1cards, p2cards);
-            useImages = true;
-        } else { //using images or slow internet
-            redrawCards(p1cards, p2cards);
-            useImages = false;
-        }
-    }
-}
+
 
 function updateLevelInfo(){
     console.log("Battery level: "+ battery.level * 100 + "%");
@@ -269,16 +259,24 @@ function card(img, x, y) {
 //requestAnimationFrame(draw);
 
 function stand() {
-    socket.emit('stand', roomName);
-    hitBtn.disabled = true;
-    standBtn.disabled = true;
+    if (socket.connected) {
+        socket.emit('stand', roomName);
+        hitBtn.disabled = true;
+        standBtn.disabled = true;
+    } else {
+        alert('You have lost connection');
+    }
 };
 
 function hit() {
-    socket.emit('hit', roomName);
-    hitBtn.disabled = true;
-    standBtn.disabled = true;
-    playerTxt.textContent = 'Waiting for other player!'
+    if (socket.connected) {
+        socket.emit('hit', roomName);
+        hitBtn.disabled = true;
+        standBtn.disabled = true;
+        playerTxt.textContent = 'Waiting for other player!'
+    } else {
+        alert('You have lost connection');
+    }
 };
 
 socket.on('rejoined', (p1score, p2score, currentRoom, id, isHost, currentTurn) => {
@@ -346,19 +344,22 @@ function getImage(card) {
 }
 
 function showResults() {
-    let revealCard = topCards.firstChild.firstChild.lastChild;
-    revealCard.removeChild(revealCard.lastChild);
+    let revealCard = null;
 
     let cardNum = p2cards[0].resultNum;
     let cardSuit = p2cards[0].resultSuit;
 
     if (useImages) {
+        revealCard = topCards.firstChild.firstChild.lastChild;
+        revealCard.removeChild(revealCard.lastChild);
         const imgReveal = new Image();
         imgReveal.src = `/assets/cards/${cardNum}_of_${cardSuit}.svg`;
         imgReveal.setAttribute('id', 'cardImg');
         revealCard.appendChild(imgReveal);
+        topCards.firstChild.firstChild.classList.add('cardReveal');
     } else {
-        revealCard.setAttribute('id', 'cardFront');
+        revealCard = topCards.firstChild.firstChild.lastChild;
+        revealCard.setAttribute('id', 'cardBackTextReveal');
         const newCardValue = document.createElement("p");
         const newCardSuit = document.createElement("p");
     
@@ -380,10 +381,11 @@ function showResults() {
     
         revealCard.appendChild(newCardValue);
         revealCard.appendChild(newCardSuit);
+        topCards.firstChild.firstChild.classList.add('cardReveal');
+        topCards.firstChild.setAttribute('class', cardSuit);
     }
 
-    
-    topCards.firstChild.firstChild.classList.add('cardReveal');
+
     startBtn.disabled = true;
     hitBtn.disabled = true;
     standBtn.disabled = true;
@@ -445,6 +447,10 @@ function showLobby() {
 }
 
 function showStartMenu() {
+    canvas.style.display = "none";
+    noCanvas.style.display = "none";
+    createBtn.enabled = true;
+    joinBtn.enabled = true;
     usernameForm.style.display = "block";
     roomForm.style.display = "block";
     joinForm.style.display = "block";
@@ -454,11 +460,10 @@ function showStartMenu() {
     p2Name.textContent = 'Waiting for other player...'
 }
 
-let is3d = false;
-let useImages = false;
 
 function showGame() {
     clearBoard();
+    goTo3d();
     lobby.style.display = "none";
 
     if (battery3d && capable3d && !slowInternet) {
@@ -468,11 +473,11 @@ function showGame() {
         is3d = true;
     } else if ((!battery3d || !capable3d) && !slowInternet) {
         noCanvas.style.display = "block";
-        useImages = true;
+        //useImages = true;
         is3d = false;
     } else {
         noCanvas.style.display = "block";
-        useImages = false;
+        //useImages = false;
         is3d = false;
     }
 
@@ -502,14 +507,20 @@ socket.on('room joined', (roomName, player1) => {
 
 socket.on('already exists', () => {
     alert("A room already exists with this ID!");
+    createBtn.enabled = true;
+    joinBtn.enabled = true;
 });
 
 socket.on('doesnt exist', () => {
     alert("No room exists with this ID!");
+    createBtn.enabled = true;
+    joinBtn.enabled = true;
 });
 
 socket.on('session full', () => {
     alert("This room is full!");
+    createBtn.enabled = true;
+    joinBtn.enabled = true;
 });
 
 socket.on('ready to begin', (username) => {
@@ -524,9 +535,9 @@ socket.on('player left lobby', () => {
 
 socket.on('host left lobby', () => {
     showStartMenu();
-    alert('Host closed the lobby!');
+    
     lobby.style.display = "none";
-    p1Name.textContent = 'You shouldnt see this';
+    p1Name.textContent = 'Player 1';
     p2Name.textContent = 'Waiting for other player...'
 })
 
@@ -552,7 +563,6 @@ socket.on('start game', (roomName) => {
 });
 
 socket.on('winner', () => {
-    //roomCode.style.display = "block";
     resultsTxt.textContent = `You win ${username}!`;
     showResults();
 });
@@ -566,6 +576,13 @@ socket.on('draw', () => {
     resultsTxt.textContent = `It's a draw!`;
     showResults();
 });
+
+socket.on('no longer exists', () => {
+    alert('Game no longer exists!');
+    controls.style.display = "none";
+    clearBoard();
+    showStartMenu();
+})
 
 var usernameForm = document.getElementById('usernameForm');
 
@@ -589,6 +606,9 @@ var leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
 var joinForm = document.getElementById('joinForm');
 var joinTxt = document.getElementById('joinGameId');
 
+let createBtn = document.getElementById('createBtn');
+let joinBtn = document.getElementById('joinBtn');
+
 let roomName = '';
 
 let host = false;
@@ -599,6 +619,8 @@ roomForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (roomTxt.value) {
         roomName = roomTxt.value;
+        createBtn.enabled = false;
+        joinBtn.enabled = false;
         socket.emit("create room", {username, roomName});
         host = true;
     }
@@ -608,6 +630,8 @@ joinForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (joinTxt.value) {
         roomName = joinTxt.value;
+        joinBtn.enabled = false;
+        createBtn.enabled = false;
         socket.emit("join room", {username, roomName});
         host = false;
         p2Name.textContent = username;
@@ -709,7 +733,8 @@ function drawCards(card, currentTurn) {
                 x += 70
             }
         }
-    } else if ((!capable3d || !battery3d) && !slowInternet) { //Good internet but cant 3D
+    //} else if ((!capable3d || !battery3d) && !slowInternet) { //Good internet but cant 3D
+    } else if (useImages) {
         newCard = makeCardImg(card.resultSuit, card.resultNum);
         if (batteryAnimation) {
             newCard.classList.add('latestCard');
@@ -770,8 +795,13 @@ function redrawCards(p1cards, p2cards, currentTurn) {
     p1cards.forEach(function(item) {
         console.log('p1card');
         
-        if (battery3d && capable3d && !slowInternet) { //If Battery Good for 3D AND Capable of 3D and Fast Internet
-            newCard = makeCard3D(-500, y, item.resultNum, item.resultSuit);
+        if (battery3d && capable3d && useImages) { //If Battery Good for 3D AND Capable of 3D and Fast Internet
+            if (host) {
+                newCard = makeCard3D(-500, y, item.resultNum, item.resultSuit);
+            } else {
+                newCard = makeCard3D(-500, y2, item.resultNum, item.resultSuit);
+            }
+            
             scene.add(newCard);
             let card3d = {
                 'cardObject': newCard,
@@ -780,8 +810,8 @@ function redrawCards(p1cards, p2cards, currentTurn) {
             p1cards3d.push(card3d);
             x += 70;
         } else {
-
-            if (!slowInternet && (!capable3d || !battery3d)) { //If Fast Internet AND (Incapable of 3d Or No battery for 3D)
+            //if (!slowInternet && (!capable3d || !battery3d)) { //If Fast Internet AND (Incapable of 3d Or No battery for 3D)
+            if (useImages) {
                 newCard = makeCardImg(item.resultSuit, item.resultNum);
             } else {
                 newCard = makeCardText(item.resultSuit, item.resultNum);
@@ -802,9 +832,12 @@ function redrawCards(p1cards, p2cards, currentTurn) {
     });
 
     p2cards.forEach(function(item) {
-        console.log('p2card');
-        if (battery3d && capable3d && !slowInternet) {
-            let newCard = makeCard3D(-500, y2, item.resultNum, item.resultSuit);
+        if (battery3d && capable3d && useImages) {
+            if (host) {
+                newCard = makeCard3D(-500, y, item.resultNum, item.resultSuit);
+            } else {
+                newCard = makeCard3D(-500, y2, item.resultNum, item.resultSuit);
+            }
             scene.add(newCard);
             let card3d = {
                 'cardObject': newCard,
@@ -813,7 +846,8 @@ function redrawCards(p1cards, p2cards, currentTurn) {
             p2cards3d.push(card3d);
             x2 += 70;
         } else {
-            if (!slowInternet && (!capable3d || !battery3d)) { //If Fast Internet AND (Incapable of 3d Or No battery for 3D)
+            //if (!slowInternet && (!capable3d || !battery3d)) { //If Fast Internet AND (Incapable of 3d Or No battery for 3D)
+            if (useImages) {
                 newCard = makeCardImg(item.resultSuit, item.resultNum);
             } else {
                 newCard = makeCardText(item.resultSuit, item.resultNum);
@@ -1129,14 +1163,11 @@ function animate() {
     }
 };
 
+//Detect 3D Capabilities
 if ((window.WebGLRenderingContext || window.WebGLRenderingContext) && (renderer.domElement.getContext('webgl') || renderer.domElement.getContext('experimental-webgl') || renderer.domElement.getContext('webgl2'))) {
     //capable3d = true;
     console.log('3D Capable')
-    //canvas.appendChild( renderer.domElement );
-    //animate();
 }
-
-
 //cache
 //reveal the other player card at the end
 //joining multipel rooms

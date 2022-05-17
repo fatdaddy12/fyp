@@ -215,7 +215,7 @@ body {
 }
 
 #debugInfo {
-    
+    display: none;
     position: fixed;
     bottom: 0;
     z-index: 999;
@@ -238,16 +238,13 @@ body {
 #results {
     display: none;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: auto;
-    height: 90%;
-    max-width: 500px;
-    max-height: 500px;
+    top: 45%;
+    width: 100%;
     margin: auto;
     text-align: center;
     background-color: rgb(20, 20, 20);
-    padding: 5px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 #results button {
@@ -282,7 +279,7 @@ body {
     flex-wrap: wrap;
 }
 
-#cardFrontText, #cardBackText, #cardFrontTextBlank {
+#cardFrontText, #cardBackText, #cardFrontTextBlank, #cardBackTextReveal {
     position: absolute;
     text-align: center;
     font-size: 24px;
@@ -305,6 +302,11 @@ body {
 
 #cardBackText {
     background-color: red;
+    transform: rotateY(180deg);
+}
+
+#cardBackTextReveal {
+    background-color: white;
     transform: rotateY(180deg);
 }
 
