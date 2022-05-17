@@ -470,7 +470,7 @@ io.on('connection', (socket) => {                           //Local Storage stor
                     io.to(room.p2.id).emit('turn');
                 }
 
-                send_cards(room.p2cards, room.p1cards, room, 2, socket.id, host, room.currentTurn);
+                send_cards(room.p1cards, room.p2cards, room, 2, socket.id, host, room.currentTurn);
                 console.log(`${roomName}: Player 2 rejoined as ${username}`)
             }
 
