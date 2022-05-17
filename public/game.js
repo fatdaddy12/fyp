@@ -33,7 +33,6 @@ if (connection) {
     connectionEnvironment(connection);
 }
 
-
 function loadImages() {
     cards.forEach(function(itemCard) {
         suit.forEach(function(itemSuit) {
@@ -69,6 +68,7 @@ function connectionEnvironment(connection) {
 
     if (inGame) {
         goTo3d();
+        goToImages();
     }
 }
 
@@ -149,6 +149,18 @@ function goTo3d() {
             canvas.removeChild(canvas.lastChild);
             redrawCards(p1cards, p2cards);
             is3d = false;
+        }
+    }
+}
+
+function goToImages() {
+    if (!is3d) {
+        if (!useImages && !slowInternet) {
+            redrawCards(p1cards, p2cards);
+            useImages = true;
+        } else { //using images or slow internet
+            redrawCards(p1cards, p2cards);
+            useImages = false;
         }
     }
 }
@@ -334,6 +346,44 @@ function getImage(card) {
 }
 
 function showResults() {
+    let revealCard = topCards.firstChild.firstChild.lastChild;
+    revealCard.removeChild(revealCard.lastChild);
+
+    let cardNum = p2cards[0].resultNum;
+    let cardSuit = p2cards[0].resultSuit;
+
+    if (useImages) {
+        const imgReveal = new Image();
+        imgReveal.src = `/assets/cards/${cardNum}_of_${cardSuit}.svg`;
+        imgReveal.setAttribute('id', 'cardImg');
+        revealCard.appendChild(imgReveal);
+    } else {
+        revealCard.setAttribute('id', 'cardFront');
+        const newCardValue = document.createElement("p");
+        const newCardSuit = document.createElement("p");
+    
+        newCardValue.setAttribute("id", "cardValue");
+        newCardSuit.setAttribute("id", "cardValue");
+    
+        suitTxt = makeSuitTxt(cardSuit);
+        numTxt = makeNumTxt(cardNum);
+    
+        let parsed = parseInt(cardNum);
+    
+        if (!isNaN(parsed)) {
+            newCardValue.textContent = cardNum;
+        } else {
+            newCardValue.textContent = numTxt;
+        };
+        
+        newCardSuit.textContent = suitTxt;
+    
+        revealCard.appendChild(newCardValue);
+        revealCard.appendChild(newCardSuit);
+    }
+
+    
+    topCards.firstChild.firstChild.classList.add('cardReveal');
     startBtn.disabled = true;
     hitBtn.disabled = true;
     standBtn.disabled = true;
@@ -405,18 +455,24 @@ function showStartMenu() {
 }
 
 let is3d = false;
+let useImages = false;
 
 function showGame() {
     clearBoard();
     lobby.style.display = "none";
 
-    if (battery3d && !slowInternet) {
+    if (battery3d && capable3d && !slowInternet) {
         canvas.style.display = "block";
         canvas.appendChild(renderer.domElement);
         animate();
         is3d = true;
+    } else if ((!battery3d || !capable3d) && !slowInternet) {
+        noCanvas.style.display = "block";
+        useImages = true;
+        is3d = false;
     } else {
         noCanvas.style.display = "block";
+        useImages = false;
         is3d = false;
     }
 
@@ -476,10 +532,12 @@ socket.on('host left lobby', () => {
 
 socket.on('player left game', () => {
     console.log('Player left');
+    playerTxt.textContent = 'Other player has left the game!'
 });
 
 socket.on('host left game', () => {
     console.log('Host left');
+    playerTxt.textContent = 'Other player has left the game!'
 });
 
 socket.on('start game', (roomName) => {
@@ -495,12 +553,12 @@ socket.on('start game', (roomName) => {
 
 socket.on('winner', () => {
     //roomCode.style.display = "block";
-    resultsTxt.textContent = `You win ${username}!!!`;
+    resultsTxt.textContent = `You win ${username}!`;
     showResults();
 });
 
 socket.on('loser', () => {
-    resultsTxt.textContent = `You lose ${username}!!!`;
+    resultsTxt.textContent = `You lose ${username}!`;
     showResults();
 });
 
@@ -604,7 +662,7 @@ function drawCards(card, currentTurn) {
     if (battery3d && capable3d && !slowInternet) {
         if (host) {
             if (currentTurn == 1) {
-                let newCard = makeCard3D(-500, y, card.resultNum, card.resultSuit);
+                newCard = makeCard3D(-500, y, card.resultNum, card.resultSuit);
                 scene.add(newCard);
                 let card3d = {
                     'cardObject': newCard,
@@ -613,7 +671,11 @@ function drawCards(card, currentTurn) {
                 p1cards3d.push(card3d);
                 x += 70;
             } else {
-                let newCard = makeCard3D(-500, y2, card.resultNum, card.resultSuit);
+                if (x2 == x2Default) {
+                    newCard = makeBlankCard3D(-500, y2);
+                } else {
+                    newCard = makeCard3D(-500, y2, card.resultNum, card.resultSuit);
+                }
                 scene.add(newCard);
                 let card3d = {
                     'cardObject': newCard,
@@ -624,7 +686,11 @@ function drawCards(card, currentTurn) {
             }
         } else {
             if (currentTurn == 1) {
-                let newCard = makeCard3D(-500, y2, card.resultNum, card.resultSuit);
+                if (x2 == x2Default) {
+                    newCard = makeBlankCard3D(-500, y2);
+                } else {
+                    newCard = makeCard3D(-500, y2, card.resultNum, card.resultSuit);
+                }
                 scene.add(newCard);
                 let card3d = {
                     'cardObject': newCard,
@@ -633,7 +699,7 @@ function drawCards(card, currentTurn) {
                 p2cards3d.push(card3d);
                 x2 += 70;
             } else {
-                let newCard = makeCard3D(-500, y, card.resultNum, card.resultSuit);
+                newCard = makeCard3D(-500, y, card.resultNum, card.resultSuit);
                 scene.add(newCard);
                 let card3d = {
                     'cardObject': newCard,
@@ -643,7 +709,7 @@ function drawCards(card, currentTurn) {
                 x += 70
             }
         }
-    } else if (!battery3d && !slowInternet) { //Good internet but cant 3D
+    } else if ((!capable3d || !battery3d) && !slowInternet) { //Good internet but cant 3D
         newCard = makeCardImg(card.resultSuit, card.resultNum);
         if (batteryAnimation) {
             newCard.classList.add('latestCard');
@@ -794,31 +860,9 @@ function makeCardText(suit, num) {
     newCardValue.setAttribute("id", "cardValue");
     newCardSuit.setAttribute("id", "cardValue");
 
-    let suitTxt = '';
-    if (suit == 'diamonds') {
-        suitTxt = '♦'; 
-    } else if (suit == 'spades') {
-        suitTxt = '♠';
-    } else if (suit == 'clubs') {
-        suitTxt = '♣';
-    } else if (suit == 'hearts') {
-        suitTxt = '♥';
-    } else {
-        suitTxt = '';
-    };
+    suitTxt = makeSuitTxt(suit);
 
-    let numTxt = '';
-    if (num == 'jack') {
-        numTxt = 'J';
-    } else if (num == 'queen') {
-        numTxt = 'Q';
-    } else if (num == 'king') {
-        numTxt = 'K';
-    } else if (num == 'ace') {
-        numTxt = 'A';
-    } else {
-        numTxt = ''
-    };
+    numTxt = makeNumTxt(num);
 
     let parsed = parseInt(num);
 
@@ -841,6 +885,40 @@ function makeCardText(suit, num) {
 
     return cardDiv;
 };
+
+function makeSuitTxt(suit) {
+    let suitTxt = '';
+    if (suit == 'diamonds') {
+        suitTxt = '♦'; 
+    } else if (suit == 'spades') {
+        suitTxt = '♠';
+    } else if (suit == 'clubs') {
+        suitTxt = '♣';
+    } else if (suit == 'hearts') {
+        suitTxt = '♥';
+    } else {
+        suitTxt = '';
+    };
+
+    return suitTxt;
+}
+
+function makeNumTxt(num) {
+    let numTxt = '';
+    if (num == 'jack') {
+        numTxt = 'J';
+    } else if (num == 'queen') {
+        numTxt = 'Q';
+    } else if (num == 'king') {
+        numTxt = 'K';
+    } else if (num == 'ace') {
+        numTxt = 'A';
+    } else {
+        numTxt = ''
+    };
+
+    return numTxt;
+}
 
 function makeCardImg(suit, num) {
     const cardDiv = document.createElement('div');
@@ -954,11 +1032,6 @@ function resizeGame() {
 
     resolutionTxt.textContent = `Resolution of screen: ${width}x${height}, bruh: ${desiredX * multiplierX}x${desiredY * multiplierX}`
     orientationTxt.textContent = `Orientation: ${orientation.type}, ${orientation.angle}`
-    console.log('Resized')
-    //console.log(`${width}x${height}, MultplierX: ${multiplierX}, MultiplierY: ${multiplierY}, Orientation: ${orientation}`)
-
-    //canvas.height = (desiredY * multiplierX) * 0.7
-    //canvas.width = (desiredX * multiplierX) * 0.7
 
     camera.aspect = width / height;
     //camera.updateProjectionMatrix();
@@ -971,8 +1044,6 @@ let fov = 50;
 let nearClippingPlane = 0.1;
 let farClippingPane = 1000;
 let aspectRatio = 16/9;
-
-
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(fov, aspectRatio, nearClippingPlane, farClippingPane);
@@ -1054,12 +1125,12 @@ function animate() {
     if (battery3d && !slowInternet) {
         requestAnimationFrame(animate);
     } else {
-
+        console.log('else that does nothing in the render function')
     }
 };
 
 if ((window.WebGLRenderingContext || window.WebGLRenderingContext) && (renderer.domElement.getContext('webgl') || renderer.domElement.getContext('experimental-webgl') || renderer.domElement.getContext('webgl2'))) {
-    capable3d = true;
+    //capable3d = true;
     console.log('3D Capable')
     //canvas.appendChild( renderer.domElement );
     //animate();
@@ -1069,5 +1140,3 @@ if ((window.WebGLRenderingContext || window.WebGLRenderingContext) && (renderer.
 //cache
 //reveal the other player card at the end
 //joining multipel rooms
-
-

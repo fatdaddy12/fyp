@@ -215,7 +215,7 @@ body {
 }
 
 #debugInfo {
-    display: none;
+    
     position: fixed;
     bottom: 0;
     z-index: 999;
@@ -340,7 +340,11 @@ body {
     transform-style: preserve-3d;
 }
 
-#card:hover #cardContainer {
+//#card:hover #cardContainer {
+//    transform: rotateY(180deg);
+//}
+
+.cardReveal {
     transform: rotateY(180deg);
 }
 
