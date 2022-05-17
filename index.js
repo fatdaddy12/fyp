@@ -183,17 +183,12 @@ function init_game(roomName) {
     io.to(currentRoom.p1.id).emit("turn");
 };
 
-function send_cards(p1score, p2score, currentRoom, player, id) {
-    //io.to(currentRoom.p1.id).emit('hitted', p1score, p2score, currentTurn);
-    //io.to(currentRoom.p2.id).emit('hitted', p2score, p1score, currentTurn);
+function send_cards(p1score, p2score, currentRoom, player, id, host, currentTurn) {
     if (player == 1){
-        io.to(currentRoom.p1.id).emit('rejoined', p1score, p2score, currentRoom, id);
+        io.to(currentRoom.p1.id).emit('rejoined', p1score, p2score, currentRoom, id, host, currentTurn);
     } else {
-        io.to(currentRoom.p2.id).emit('rejoined', p1score, p2score, currentRoom, id);
+        io.to(currentRoom.p2.id).emit('rejoined', p2score, p1score, currentRoom, id, host, currentTurn);
     }
-    
-
-    //io.to(roomName).emit('hitted', p1score, p2score, currentTurn);
 }
 
 function hit(roomName) {
@@ -252,10 +247,6 @@ function hit(roomName) {
             io.to(currentRoom.p2.id).emit('turn');
         }
     }
-
-    //send_cards(p1score, p2score, currentTurn, currentRoom);
-
-    //console.log(currentRoom);
 };
 
 function stand(roomName) {
@@ -343,19 +334,22 @@ io.on('connection', (socket) => {                           //Local Storage stor
         let currentRoomIndex = rooms.findIndex(item => item.roomName == roomName);
         let room = get_room(roomName);
 
-        if (socket.id == room.p1.id) {
-            console.log(`${room.roomName}: Player 1 left while in lobby, closing room.`)
-            if (room.p2) {
-                io.to(room.p2.id).emit("host left lobby");
+        if (room.p1.id) {
+            if (socket.id == room.p1.id) {
+                console.log(`${room.roomName}: Player 1 left while in lobby, closing room.`)
+                if (room.p2) {
+                    io.to(room.p2.id).emit("host left lobby");
+                }
+                io.socketsLeave(room.roomName);
+                rooms.splice(currentRoomIndex);
+            } else {
+                console.log(`${room.roomName}: Player 2 left while in lobby.`)
+                room.p2 = null;
+                room.p2connection = 'none';
+                io.to(room.p1.id).emit("player left lobby");
             }
-            io.socketsLeave(room.roomName);
-            rooms.splice(currentRoomIndex);
-        } else {
-            console.log(`${room.roomName}: Player 2 left while in lobby.`)
-            room.p2 = null;
-            room.p2connection = 'none';
-            io.to(room.p1.id).emit("player left lobby");
         }
+
     });
 
     players.push(socket);
@@ -415,7 +409,7 @@ io.on('connection', (socket) => {                           //Local Storage stor
                 } else if (socket.id == room.p1.id) {
                     console.log(`${room.roomName}: Player 1 disconnected while in game.`)
                     room.p1connection = 'disconnected';
-                    io.to(room.p1.id).emit("host left game");
+                    io.to(room.p2.id).emit("host left game");
                 }
                 
             }
@@ -428,10 +422,6 @@ io.on('connection', (socket) => {                           //Local Storage stor
     });
 
     socket.on('rejoin', (roomName, username) => {
-        //Rejoin room name
-        //Add room ID to p1 or p2
-        //Send them the score
-
         console.log(`${roomName}: User attempting rejoin`)
 
         let room = get_room(roomName);
@@ -448,22 +438,26 @@ io.on('connection', (socket) => {                           //Local Storage stor
                 room.p1 = user;
                 room.p1connection = 'connected';
 
+                let host = true;
+
                 if (room.turn == 1) {
                     io.to(room.p1.id).emit('turn');  
                 }
 
-                send_cards(room.p1cards, room.p2cards, room, 1, socket.id);
+                send_cards(room.p1cards, room.p2cards, room, 1, socket.id, host, room.currentTurn);
                 console.log(`${roomName}: Player 1 rejoined as ${username}`)
                 
             } else if (room.p2connection == 'disconnected') {
                 room.p2 = user;
                 room.p2connection = 'connected';
+
+                let host = false;
                 
                 if (room.turn == 2) {
                     io.to(room.p2.id).emit('turn');
                 }
 
-                send_cards(room.p2cards, room.p1cards, room, 2, socket.id);
+                send_cards(room.p2cards, room.p1cards, room, 2, socket.id, host, room.currentTurn);
                 console.log(`${roomName}: Player 2 rejoined as ${username}`)
             }
 
